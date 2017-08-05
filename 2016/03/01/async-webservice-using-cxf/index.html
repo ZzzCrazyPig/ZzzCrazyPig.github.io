@@ -1,0 +1,782 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Java," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="最近工作需要接触CXF异步webservice的发布和调用，在网上Google并捣鼓了好一阵子，总算成功了。毕竟这方面的资料比较少，自己总结一下写下这篇博文。本文将描述如何利用CXF来发布和调用异步的webservice，通过一个示例，带大家一步一步开发基于CXF的异步webservice及客户端调用程序。
+【参考】
+
+asynchronous-web-service-using-cxf
+cxf-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CXF异步WebService发布和调用">
+<meta property="og:url" content="http://yoursite.com/2016/03/01/async-webservice-using-cxf/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="最近工作需要接触CXF异步webservice的发布和调用，在网上Google并捣鼓了好一阵子，总算成功了。毕竟这方面的资料比较少，自己总结一下写下这篇博文。本文将描述如何利用CXF来发布和调用异步的webservice，通过一个示例，带大家一步一步开发基于CXF的异步webservice及客户端调用程序。
+【参考】
+
+asynchronous-web-service-using-cxf
+cxf-">
+<meta property="og:image" content="http://yoursite.com/!--￼7-->/assets/image/async-webservice-using-cxf/show_cxf_publish_services.png">
+<meta property="og:updated_time" content="2017-08-05T06:41:12.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CXF异步WebService发布和调用">
+<meta name="twitter:description" content="最近工作需要接触CXF异步webservice的发布和调用，在网上Google并捣鼓了好一阵子，总算成功了。毕竟这方面的资料比较少，自己总结一下写下这篇博文。本文将描述如何利用CXF来发布和调用异步的webservice，通过一个示例，带大家一步一步开发基于CXF的异步webservice及客户端调用程序。
+【参考】
+
+asynchronous-web-service-using-cxf
+cxf-">
+<meta name="twitter:image" content="http://yoursite.com/!--￼7-->/assets/image/async-webservice-using-cxf/show_cxf_publish_services.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/03/01/async-webservice-using-cxf/"/>
+
+
+
+
+
+  <title> CXF异步WebService发布和调用 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/01/async-webservice-using-cxf/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                CXF异步WebService发布和调用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-01T00:00:00+08:00">
+                2016-03-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java-WebService/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.WebService</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近工作需要接触CXF异步webservice的发布和调用，在网上Google并捣鼓了好一阵子，总算成功了。毕竟这方面的资料比较少，自己总结一下写下这篇博文。本文将描述如何利用CXF来发布和调用异步的webservice，通过一个示例，带大家一步一步开发基于CXF的异步webservice及客户端调用程序。</p>
+<p><strong>【参考】</strong></p>
+<ul>
+<li><a href="http://www.javatips.net/blog/2014/03/asynchronous-web-service-using-cxf" target="_blank" rel="external">asynchronous-web-service-using-cxf</a></li>
+<li><a href="http://www.javatips.net/blog/2014/03/cxf-asynchronous-client" target="_blank" rel="external">cxf-asynchronous-client</a></li>
+<li><a href="http://cxf.apache.org/docs/overview.html" target="_blank" rel="external">apache cxf docs</a></li>
+</ul>
+<a id="more"></a>
+<h2 id="1-异步webservice简介"><a href="#1-异步webservice简介" class="headerlink" title="1.异步webservice简介"></a>1.异步webservice简介</h2><p>异步webservice可以让客户端调用线程在调用webservice的时候不必阻塞等待服务端返回结果，在调用请求后快速返回，然后做其他想做的事情。</p>
+<h3 id="1-1-客户端异步调用方式"><a href="#1-1-客户端异步调用方式" class="headerlink" title="1.1 客户端异步调用方式"></a>1.1 客户端异步调用方式</h3><p><strong>(1) Callback</strong></p>
+<p>客户端通过实现<code>javax.xml.ws.AsyncHandler</code>,从而让服务端在做完操作后回调AsyncHandler的handleResponse方法进行异步处理。</p>
+<p><strong>(2) Polling</strong></p>
+<p>客户端拿到<code>javax.xml.ws.Response</code>类型的返回结果，然后不断轮询Response的isDone方法来判断是否调用已经完成。</p>
+<h3 id="1-2-服务端异步调用的实现"><a href="#1-2-服务端异步调用的实现" class="headerlink" title="1.2 服务端异步调用的实现"></a>1.2 服务端异步调用的实现</h3><p>CXF提供了两种方法来响应客户端的异步webservice请求，包括:</p>
+<p><strong>(1) Continuations</strong></p>
+<p>CXF提供了API供开发者来创建并使用<strong>Continuation</strong>,关于continuation的详细介绍请查看以下链接:</p>
+<p><a href="http://sberyozkin.blogspot.com/2008/12/continuations-in-cxf.html" target="_blank" rel="external">continuations in cxf</a></p>
+<p><strong>(2) @UseAsyncMethod annotation</strong></p>
+<p>通过<code>@UseAsyncMethod</code>注解同步方法，让同步方法在满足异步调用条件下调用其对应的异步方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@UseAsyncMethod</span></div><div class="line"><span class="function"><span class="keyword">public</span> String <span class="title">sayHello</span><span class="params">(String username)</span> </span>&#123;</div><div class="line">	<span class="keyword">return</span> <span class="string">"hello "</span> + username;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> Future&lt;String&gt; <span class="title">sayHelloAsync</span><span class="params">(String username, 	AsyncHandler&lt;String&gt; asyncHandler)</span> </span>&#123;</div><div class="line">	<span class="comment">// ...</span></div><div class="line">	<span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> Response&lt;String&gt; <span class="title">sayHelloAsync</span><span class="params">(String username)</span> </span>&#123;</div><div class="line">	<span class="comment">// ...</span></div><div class="line">	<span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如上所示,sayHello方法注解了@UseAsyncMethod,如果web容器支持异步调用，将会调用其对应的sayHelloAsync方法,如果不支持异步调用，那么将会调用同步的sayHello方法。</p>
+<p><strong>【注意】</strong></p>
+<p>CXF依赖于Web容器来发布webservice,必须确保Web容器支持异步机制才能使CXF发布的webservice成功处理来自客户端的异步请求。eg:通过Tomcat配置CXF发布webservice必须确保配置在web.xml的CXFServlet配置了<strong>async-supported</strong>为true</p>
+<h2 id="2-示例"><a href="#2-示例" class="headerlink" title="2. 示例"></a>2. 示例</h2><p>通过发布一个HelloService异步webservice以及开发HelloClient来向大家说明基于CXF如何开发和调用异步的webservice。示例代码可以在我的github拉取:<a href="https://github.com/ZzzCrazyPig/CXFTutorial.git" target="_blank" rel="external">CXFTutorial</a></p>
+<h3 id="2-1-环境说明"><a href="#2-1-环境说明" class="headerlink" title="2.1 环境说明"></a>2.1 环境说明</h3><p><strong>【软件环境】</strong></p>
+<ul>
+<li>JDK 6+</li>
+<li>STS(Eclipse)</li>
+<li>Tomcat7</li>
+</ul>
+<p><strong>【依赖库】</strong></p>
+<ul>
+<li>aopalliance-1.0.jar</li>
+<li>asm-3.3.1.jar</li>
+<li>commons-logging-1.1.1.jar</li>
+<li>cxf-bundle-2.7.15.jar</li>
+<li>httpasyncclient-4.0-beta3.jar</li>
+<li>httpclient-4.2.5.jar</li>
+<li>httpcore-4.2.4.jar</li>
+<li>httpcore-nio-4.2.4.jar</li>
+<li>neethi-3.0.3.jar</li>
+<li>spring-aop-3.0.7.RELEASE.jar</li>
+<li>spring-asm-3.0.7.RELEASE.jar</li>
+<li>spring-beans-3.0.7.RELEASE.jar</li>
+<li>spring-context-3.0.7.RELEASE.jar</li>
+<li>spring-core-3.0.7.RELEASE.jar</li>
+<li>spring-expression-3.0.7.RELEASE.jar</li>
+<li>spring-web-3.0.7.RELEASE.jar</li>
+<li>stax2-api-3.1.4.jar</li>
+<li>woodstox-core-asl-4.4.1.jar</li>
+<li>wsdl4j-1.6.3.jar</li>
+<li>xmlschema-core-2.1.0.jar</li>
+</ul>
+<h3 id="2-2-开发webservice接口及实现类"><a href="#2-2-开发webservice接口及实现类" class="headerlink" title="2.2 开发webservice接口及实现类"></a>2.2 开发webservice接口及实现类</h3><h4 id="2-2-1-开发HelloService接口"><a href="#2-2-1-开发HelloService接口" class="headerlink" title="2.2.1 开发HelloService接口"></a>2.2.1 开发HelloService接口</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.hello;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.concurrent.Future;</div><div class="line"></div><div class="line"><span class="keyword">import</span> javax.jws.WebService;</div><div class="line"><span class="keyword">import</span> javax.xml.ws.AsyncHandler;</div><div class="line"><span class="keyword">import</span> javax.xml.ws.Response;</div><div class="line"><span class="keyword">import</span> javax.xml.ws.ResponseWrapper;</div><div class="line"></div><div class="line"><span class="meta">@WebService</span>(name = <span class="string">"helloService"</span>)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">HelloService</span> </span>&#123;</div><div class="line">	</div><div class="line">	<span class="meta">@ResponseWrapper</span>(localName = <span class="string">"sayHelloResponse"</span>, className = <span class="string">"java.lang.String"</span>)</div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">sayHello</span><span class="params">(String username)</span></span>;</div><div class="line"></div><div class="line">	<span class="meta">@ResponseWrapper</span>(localName = <span class="string">"sayHelloResponse"</span>, className = <span class="string">"java.lang.String"</span>)</div><div class="line">	<span class="function"><span class="keyword">public</span> Future&lt;String&gt; <span class="title">sayHelloAsync</span><span class="params">(String username, AsyncHandler&lt;String&gt; asyncHandler)</span></span>;</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> Response&lt;String&gt; <span class="title">sayHelloAsync</span><span class="params">(String username)</span></span>;</div><div class="line">	</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="2-2-2-实现HelloServiceImpl"><a href="#2-2-2-实现HelloServiceImpl" class="headerlink" title="2.2.2 实现HelloServiceImpl"></a>2.2.2 实现HelloServiceImpl</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.hello;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.concurrent.Future;</div><div class="line"></div><div class="line"><span class="keyword">import</span> javax.jws.WebService;</div><div class="line"><span class="keyword">import</span> javax.xml.ws.AsyncHandler;</div><div class="line"><span class="keyword">import</span> javax.xml.ws.Response;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.apache.cxf.annotations.UseAsyncMethod;</div><div class="line"><span class="keyword">import</span> org.apache.cxf.jaxws.ServerAsyncResponse;</div><div class="line"></div><div class="line"><span class="meta">@WebService</span>(endpointInterface=<span class="string">"com.hello.HelloService"</span>)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HelloServiceImpl</span> <span class="keyword">implements</span> <span class="title">HelloService</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="meta">@UseAsyncMethod</span></div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">sayHello</span><span class="params">(String username)</span> </span>&#123;</div><div class="line">		System.out.println(<span class="string">"execute sayHello method"</span>);</div><div class="line">		<span class="keyword">try</span> &#123;</div><div class="line">		    Thread.sleep(<span class="number">5000</span>);</div><div class="line">		&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">		    e.printStackTrace();</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">return</span> <span class="string">"hello "</span> + username;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> Future&lt;String&gt; <span class="title">sayHelloAsync</span><span class="params">(String username,</span></span></div><div class="line">			AsyncHandler&lt;String&gt; asyncHandler) &#123;</div><div class="line">		System.out.println(<span class="string">"execute sayHelloAsync method"</span>);</div><div class="line">		<span class="keyword">final</span> ServerAsyncResponse&lt;String&gt; asyncResponse = <span class="keyword">new</span> ServerAsyncResponse&lt;String&gt;();</div><div class="line">		<span class="keyword">new</span> Thread() &#123;</div><div class="line">		    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		        String result = sayHello(username);</div><div class="line">		        asyncResponse.set(result);</div><div class="line">		        System.out.println(<span class="string">"Responding on background thread\n"</span>);</div><div class="line">		        asyncHandler.handleResponse(asyncResponse);</div><div class="line">		    &#125;</div><div class="line">		&#125;.start();</div><div class="line">		<span class="keyword">return</span> asyncResponse;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> Response&lt;String&gt; <span class="title">sayHelloAsync</span><span class="params">(String username)</span> </span>&#123;</div><div class="line">		<span class="comment">// TODO Auto-generated method stub</span></div><div class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="2-3-发布webservice"><a href="#2-3-发布webservice" class="headerlink" title="2.3 发布webservice"></a>2.3 发布webservice</h3><h4 id="2-3-1-配置cxf-xml"><a href="#2-3-1-配置cxf-xml" class="headerlink" title="2.3.1 配置cxf.xml"></a>2.3.1 配置cxf.xml</h4><p>通过Spring配置CXF发布webservice的端口及地址</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span></span></div><div class="line">    <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xmlns:jaxws</span>=<span class="string">"http://cxf.apache.org/jaxws"</span></div><div class="line">    <span class="attr">xsi:schemaLocation</span>=<span class="string">"</span></div><div class="line">http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</div><div class="line">http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd"&gt;</div><div class="line"></div><div class="line">	<span class="tag">&lt;<span class="name">jaxws:endpoint</span> <span class="attr">id</span>=<span class="string">"helloService"</span> <span class="attr">implementor</span>=<span class="string">"com.hello.HelloServiceImpl"</span> <span class="attr">address</span>=<span class="string">"/helloService"</span>&gt;</span><span class="tag">&lt;/<span class="name">jaxws:endpoint</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></div></pre></td></tr></table></figure>
+<p><strong>【注意】</strong> cxf.xml文件放置在/WEB-INF/目录下，即与web.xml处于同个目录</p>
+<h4 id="2-3-2-配置web-xml"><a href="#2-3-2-配置web-xml" class="headerlink" title="2.3.2 配置web.xml"></a>2.3.2 配置web.xml</h4><p>在web.xml里面配置CXFServlet来发布webservice</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">web-app</span> <span class="attr">xmlns</span>=<span class="string">"http://java.sun.com/xml/ns/javaee"</span> <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> </span></div><div class="line"><span class="attr">version</span>=<span class="string">"3.0"</span> <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://java.sun.com/xml/ns/javaee           </span></div><div class="line">http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"&gt;</div><div class="line">    <span class="tag">&lt;<span class="name">context-param</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">param-value</span>&gt;</span>WEB-INF/cxf.xml<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">context-param</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">listener</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">listener-class</span>&gt;</span>org.springframework.web.context.ContextLoaderListener<span class="tag">&lt;/<span class="name">listener-class</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">listener</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">servlet</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-name</span>&gt;</span>CXFServlet<span class="tag">&lt;/<span class="name">servlet-name</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-class</span>&gt;</span>org.apache.cxf.transport.servlet.CXFServlet<span class="tag">&lt;/<span class="name">servlet-class</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">load-on-startup</span>&gt;</span>1<span class="tag">&lt;/<span class="name">load-on-startup</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">async-supported</span>&gt;</span>true<span class="tag">&lt;/<span class="name">async-supported</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">servlet</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">servlet-mapping</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-name</span>&gt;</span>CXFServlet<span class="tag">&lt;/<span class="name">servlet-name</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">url-pattern</span>&gt;</span>/services/*<span class="tag">&lt;/<span class="name">url-pattern</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">servlet-mapping</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">web-app</span>&gt;</span></div></pre></td></tr></table></figure>
+<h4 id="2-3-3-使用Tomcat加载应用"><a href="#2-3-3-使用Tomcat加载应用" class="headerlink" title="2.3.3 使用Tomcat加载应用"></a>2.3.3 使用Tomcat加载应用</h4><p>完成以上步骤后通过Tomcat7加载应用，访问<a href="http://localhost:8080/CXFTutorial/services" target="_blank" rel="external">http://localhost:8080/CXFTutorial/services</a>可以看到CXF发布的webservice</p>
+<p><img src="!--￼7--&gt;/assets/image/async-webservice-using-cxf/show_cxf_publish_services.png" alt="show cxf publish services"></p>
+<h3 id="2-4-开发webservice客户端调用"><a href="#2-4-开发webservice客户端调用" class="headerlink" title="2.4 开发webservice客户端调用"></a>2.4 开发webservice客户端调用</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.hello.client;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.concurrent.Future;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">import</span> org.apache.cxf.interceptor.LoggingInInterceptor;</div><div class="line"><span class="keyword">import</span> org.apache.cxf.interceptor.LoggingOutInterceptor;</div><div class="line"><span class="keyword">import</span> org.apache.cxf.jaxws.JaxWsProxyFactoryBean;</div><div class="line"></div><div class="line"><span class="keyword">import</span> com.hello.HelloService;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">HelloClient2</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line"></div><div class="line">	JaxWsProxyFactoryBean factory = <span class="keyword">new</span> JaxWsProxyFactoryBean();</div><div class="line"></div><div class="line">	factory.setServiceClass(HelloService.class);</div><div class="line">	factory.setAddress(<span class="string">"http://192.168.16.52:8080/CXFTutorial/services/helloService?wsdl"</span>);</div><div class="line">	factory.getInInterceptors().add(<span class="keyword">new</span> LoggingInInterceptor());</div><div class="line">	factory.getOutInterceptors().add(<span class="keyword">new</span> LoggingOutInterceptor());</div><div class="line">	HelloService client = (HelloService) factory.create();</div><div class="line"></div><div class="line">       </div><div class="line">	<span class="comment">// callback method</span></div><div class="line">	TestAsyncHandler testAsyncHandler = <span class="keyword">new</span> TestAsyncHandler();</div><div class="line">	System.out.println(<span class="string">"Invoking changeStudentAsync using callback object..."</span>);</div><div class="line">	Future&lt;?&gt; response = client.sayHelloAsync(</div><div class="line">		<span class="string">"CrazyPig"</span>, testAsyncHandler);</div><div class="line">	<span class="keyword">while</span> (!response.isDone()) &#123;</div><div class="line">	    Thread.sleep(<span class="number">100</span>);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String resp = testAsyncHandler.getResponse();</div><div class="line">	System.out.println(<span class="string">"Server responded through callback with: "</span> + resp);</div><div class="line"></div><div class="line">	System.exit(<span class="number">0</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>通过实现了AsyncHandler接口的TestAsyncHandler来处理webservice响应结果，handleResponse方法会在服务端处理完结果后被调用，即所谓的回调机制。</p>
+<p>使用response.isDone()来判断并休眠是为了防止main函数过快退出。实际上可以替换成你想做的其他事情。</p>
+<p>当然，如果你需要根据webservice返回结果来进行你的下一步逻辑，也可以直接调用response.get()，这个方法会阻塞到调用结果成功返回。(实际上这样跟调用同步方法没什么区别了)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.hello.client;</div><div class="line"></div><div class="line"><span class="keyword">import</span> javax.xml.ws.AsyncHandler;</div><div class="line"><span class="keyword">import</span> javax.xml.ws.Response;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestAsyncHandler</span> <span class="keyword">implements</span> <span class="title">AsyncHandler</span>&lt;<span class="title">String</span>&gt; </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> String reply;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleResponse</span><span class="params">(Response&lt;String&gt; response)</span> </span>&#123;</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">	    System.out.println(<span class="string">"handleResponse called"</span>);</div><div class="line">	    reply = response.get();</div><div class="line">	&#125; <span class="keyword">catch</span> (Exception ex) &#123;</div><div class="line">	    ex.printStackTrace();</div><div class="line">	&#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getResponse</span><span class="params">()</span> </span>&#123;</div><div class="line">	<span class="keyword">return</span> reply;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/20/carte-introduction/" rel="next" title="Kettle Carte简介">
+                <i class="fa fa-chevron-left"></i> Kettle Carte简介
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/06/build-site-using-github-pages/" rel="prev" title="使用GitHub Pages搭建技术博客">
+                使用GitHub Pages搭建技术博客 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-异步webservice简介"><span class="nav-number">1.</span> <span class="nav-text">1.异步webservice简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-客户端异步调用方式"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 客户端异步调用方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-服务端异步调用的实现"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 服务端异步调用的实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-示例"><span class="nav-number">2.</span> <span class="nav-text">2. 示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-环境说明"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 环境说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-开发webservice接口及实现类"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 开发webservice接口及实现类</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-开发HelloService接口"><span class="nav-number">2.2.1.</span> <span class="nav-text">2.2.1 开发HelloService接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-2-实现HelloServiceImpl"><span class="nav-number">2.2.2.</span> <span class="nav-text">2.2.2 实现HelloServiceImpl</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-发布webservice"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 发布webservice</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-1-配置cxf-xml"><span class="nav-number">2.3.1.</span> <span class="nav-text">2.3.1 配置cxf.xml</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-2-配置web-xml"><span class="nav-number">2.3.2.</span> <span class="nav-text">2.3.2 配置web.xml</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-3-使用Tomcat加载应用"><span class="nav-number">2.3.3.</span> <span class="nav-text">2.3.3 使用Tomcat加载应用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-开发webservice客户端调用"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 开发webservice客户端调用</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

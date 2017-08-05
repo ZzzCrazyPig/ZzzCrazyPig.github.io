@@ -1,0 +1,779 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Mycat," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="mycat sql解析模块是mycat实现sql路由模块和sql结果集后处理模块的基础，在mycat的几大模块里面占据相当重要的位置。这篇文章首先简单介绍mycat里面sql解析模块的作用，后面结合部分源码来看这个模块的功能。
+
+本文分析的mycat版本为1.6。假如你使用的是1.4或者1.5，也没关系，因为sql解析功能在1.4和更高版本在大方向上是没怎么变化的。在这里，我们只分析mycat服务">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mycat sql解析模块分析">
+<meta property="og:url" content="http://yoursite.com/2016/10/06/mycat-sqlparse-model-introduction/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="mycat sql解析模块是mycat实现sql路由模块和sql结果集后处理模块的基础，在mycat的几大模块里面占据相当重要的位置。这篇文章首先简单介绍mycat里面sql解析模块的作用，后面结合部分源码来看这个模块的功能。
+
+本文分析的mycat版本为1.6。假如你使用的是1.4或者1.5，也没关系，因为sql解析功能在1.4和更高版本在大方向上是没怎么变化的。在这里，我们只分析mycat服务">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-sql-parser/mycat-druid-parser-classdiagram.jpg">
+<meta property="og:updated_time" content="2017-08-05T07:14:53.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mycat sql解析模块分析">
+<meta name="twitter:description" content="mycat sql解析模块是mycat实现sql路由模块和sql结果集后处理模块的基础，在mycat的几大模块里面占据相当重要的位置。这篇文章首先简单介绍mycat里面sql解析模块的作用，后面结合部分源码来看这个模块的功能。
+
+本文分析的mycat版本为1.6。假如你使用的是1.4或者1.5，也没关系，因为sql解析功能在1.4和更高版本在大方向上是没怎么变化的。在这里，我们只分析mycat服务">
+<meta name="twitter:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-sql-parser/mycat-druid-parser-classdiagram.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/10/06/mycat-sqlparse-model-introduction/"/>
+
+
+
+
+
+  <title> Mycat sql解析模块分析 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/06/mycat-sqlparse-model-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Mycat sql解析模块分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-06T00:00:00+08:00">
+                2016-10-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mycat-源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Mycat.源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>mycat sql解析模块是mycat实现sql路由模块和sql结果集后处理模块的基础，在mycat的几大模块里面占据相当重要的位置</strong>。这篇文章首先简单介绍mycat里面sql解析模块的作用，后面结合部分源码来看这个模块的功能。</p>
+<blockquote>
+<p>本文分析的mycat版本为1.6。假如你使用的是1.4或者1.5，也没关系，因为sql解析功能在1.4和更高版本在大方向上是没怎么变化的。在这里，我们只分析mycat服务(server)端口的sql解析。对于mycat管理(manager)端口的sql解析，不在本文讨论范围内。</p>
+</blockquote>
+<a id="more"></a>
+<h1 id="1-sql解析模块功能说明"><a href="#1-sql解析模块功能说明" class="headerlink" title="1. sql解析模块功能说明"></a>1. sql解析模块功能说明</h1><p>mycat作为一个分布式数据库中间件，其sql解析主要有以下作用:</p>
+<p><strong>(1) 判断sql语法是否正确</strong></p>
+<p>sql解析模块的一个重要功能就是判断sql是否符合语法要求。因为后端数据库默认对接mysql，所以在sql解析模块默认判断是否符合mysql语法。</p>
+<p><strong>(2) sql语句分类并对不同类型的sql语句做不同的逻辑处理</strong></p>
+<p>不同的逻辑处理包括决定sql语句是否被支持、sql拦截、sql缓存等。</p>
+<blockquote>
+<p>mycat作为一款中间件，并非所有的mysql语法都支持，因此，对于一些特殊的不支持语法，在sql解析模块解析通过之后需要进行额外的判断, 然后直接返回响应(不支持此语法)给客户端。</p>
+</blockquote>
+<p><strong>(3) 为sql路由模块处理提供服务</strong></p>
+<p><strong>sql路由模块是实现mycat分库分表的关键，而sql解析模块是sql路由模块实现的关键</strong>。sql路由依赖sql解析结果。举例说明，假设表customer按主键id取模分到2个节点上，其中<code>id % 2 == 0</code>位于dn1， <code>id % 2 == 1</code> 位于dn2，那么对于下面的语句:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">select</span> * <span class="keyword">from</span> customer <span class="keyword">where</span> <span class="keyword">id</span> = <span class="number">1</span>;</div></pre></td></tr></table></figure>
+<p>经过sql解析模块可以得到where条件<code>id = 1</code>, 在sql路由模块中我们判断到id是分片字段，结合这个表的路由规则判断该语句可以直接发送到dn2。</p>
+<p><strong>(4) 为sql结果集后处理模块提供服务</strong></p>
+<p>当查询语句需要路由到多个节点的时候，mycat收到的结果集有多个，这个时候mycat需要判断结果集是否需要进行后处理，这是sql结果集后处理模块的工作。那么，什么样的条件下需要进行后处理呢？比如带<strong>group by、order by、limit</strong>等条件，又或者是使用<strong>count、sum、avg</strong>函数的时候，就需要启动结果集后处理。这些条件正是在sql解析模块中能够得到的。也正是因为在sql解析模块中能够得到这些信息，才使得sql结果集后处理模块的实现成为可能。</p>
+<p><strong>mycat的sql解析可以化分为两部分，一部分是浅解析，另外一部分是深解析</strong>。下面分别说明这两部分:</p>
+<h2 id="1-1-浅解析"><a href="#1-1-浅解析" class="headerlink" title="1.1 浅解析"></a>1.1 浅解析</h2><p>浅解析负责得到sql语句类型，比如SELECT类型、DELETE类型、UPDATE类型、INSERT类型。<strong>对sql语句做类型的解析主要是为了能对不同类型的sql语句进行不同的逻辑处理</strong>，比如，对于SELECT语句会考虑是否缓存，是否利用缓存的路由结果；对于DELETE、UPDATE、INSERT语句，会判断权限，有权限才给执行，对于一些特殊语句，决定是否可以直接返回响应给客户端而不需要走到后端数据节点。</p>
+<blockquote>
+<p>mycat的sql缓存是缓存sql对应的路由结果，而且只缓存SELECT类型的sql语句。</p>
+</blockquote>
+<h2 id="1-2-深解析"><a href="#1-2-深解析" class="headerlink" title="1.2 深解析"></a>1.2 深解析</h2><p>深解析需要解析整个sql语句，得到sql语法树(AST)，比如下面的语句:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">select</span> <span class="keyword">name</span> <span class="keyword">from</span> <span class="keyword">user</span> <span class="keyword">where</span> <span class="keyword">id</span> = <span class="number">1</span>;</div></pre></td></tr></table></figure>
+<p><strong>经过深解析以后，我们能够知道select的具体列有哪些，from子句涉及的表名，where条件又有哪些</strong>。更复杂的还有解析子查询、group by、order by、limit、函数等等。</p>
+<p>深解析的目的: </p>
+<p>(1) 第一个目的是判断sql语法是否正确。深解析不仅仅涉及词法分析，更涉及语法分析，因此，它能够判断传进来的sql语句在语法上是否正确。</p>
+<p>(2) 另外，可以为后面的sql路由模块服务，根据得到的sql解析树，在sql路由模块中得到准确的路由结果(这个语句应该发到哪些节点，有可能发单个节点，有可能发多个节点，有可能发所有的节点)。</p>
+<p>(3) 最后，为sql结果集后处理模块服务，根据前面提到的，经过深解析得到的sql解析树带有整个sql语句的详细信息，里面的一些信息(比如order by、limit等)将作为sql结果集后处理的依据。</p>
+<p>深解析涉及到sql词法分析、语法分析，在mycat中，利用了alibaba的<strong>druid sql parser</strong>来实现深解析。</p>
+<blockquote>
+<p>druid是阿里开源出来的项目，代码托管在github上。sql parser只是它里面的一个附加功能，它的主要功能是用来做数据库连接池，类比c3p0。mycat1.3版本默认用的sql解析库是fdb parser，从1.4版本开始，基于sql解析器性能的考虑，换用druid的sql parser解析库，据说druid的解析库性能在sql足够长、足够复杂的情况下，是fdb parser的几十倍！</p>
+</blockquote>
+<h1 id="2-sql解析模块源码分析"><a href="#2-sql解析模块源码分析" class="headerlink" title="2. sql解析模块源码分析"></a>2. sql解析模块源码分析</h1><h2 id="2-1-浅解析"><a href="#2-1-浅解析" class="headerlink" title="2.1 浅解析"></a>2.1 浅解析</h2><p>前面功能介绍部分提到，sql解析模块中的浅解析是为了解析出sql语句类型，然后根据不同的sql语句类型，做不同的逻辑处理。在mycat代码里面，sql浅解析是在<code>ServerQueryHandler</code>类的query方法里被调用，sql浅解析主要体现在通过<code>ServerParse</code>类的parse方法(静态方法)来得到sql语句类型。关注下这两个类相应代码:</p>
+<p>(1) <code>ServerQueryHandler</code>的query方法会调用<code>ServerParse</code>的parse方法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">query</span><span class="params">(String sql)</span> </span>&#123;</div><div class="line">	</div><div class="line">	ServerConnection c = <span class="keyword">this</span>.source;</div><div class="line">	<span class="keyword">if</span> (LOGGER.isDebugEnabled()) &#123;</div><div class="line">		LOGGER.debug(<span class="keyword">new</span> StringBuilder().append(c).append(sql).toString());</div><div class="line">	&#125;</div><div class="line">	<span class="comment">//</span></div><div class="line">	<span class="keyword">int</span> rs = ServerParse.parse(sql);</div><div class="line">	<span class="keyword">int</span> sqlType = rs &amp; <span class="number">0xff</span>;</div><div class="line">	</div><div class="line">	<span class="keyword">switch</span> (sqlType) &#123;</div><div class="line">	<span class="comment">//explain sql</span></div><div class="line">	<span class="keyword">case</span> ServerParse.EXPLAIN:</div><div class="line">		ExplainHandler.handle(sql, c, rs &gt;&gt;&gt; <span class="number">8</span>);</div><div class="line">		<span class="keyword">break</span>;</div><div class="line">	<span class="comment">//explain2 datanode=? sql=?</span></div><div class="line">	<span class="keyword">case</span> ServerParse.EXPLAIN2:</div><div class="line">		Explain2Handler.handle(sql, c, rs &gt;&gt;&gt; <span class="number">8</span>);</div><div class="line">		<span class="keyword">break</span>;</div><div class="line">	<span class="keyword">case</span> ServerParse.SET:</div><div class="line">		SetHandler.handle(sql, c, rs &gt;&gt;&gt; <span class="number">8</span>);</div><div class="line">		<span class="keyword">break</span>;</div><div class="line">	<span class="keyword">case</span> ServerParse.SHOW:</div><div class="line">		ShowHandler.handle(sql, c, rs &gt;&gt;&gt; <span class="number">8</span>);</div><div class="line">		<span class="keyword">break</span>;</div><div class="line">	<span class="keyword">case</span> ServerParse.SELECT:</div><div class="line">		SelectHandler.handle(sql, c, rs &gt;&gt;&gt; <span class="number">8</span>);</div><div class="line">		<span class="keyword">break</span>;</div><div class="line">	<span class="comment">// ... 其他case分支</span></div><div class="line">	<span class="keyword">default</span>:</div><div class="line">		<span class="keyword">if</span>(readOnly)&#123;</div><div class="line">			LOGGER.warn(<span class="keyword">new</span> StringBuilder().append(<span class="string">"User readonly:"</span>).append(sql).toString());</div><div class="line">			c.writeErrMessage(ErrorCode.ER_USER_READ_ONLY, <span class="string">"User readonly"</span>);</div><div class="line">			<span class="keyword">break</span>;</div><div class="line">		&#125;</div><div class="line">		c.execute(sql, rs &amp; <span class="number">0xff</span>);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>(2) 在<code>ServerParse</code>的parse方法里面，逐个字符判断sql语句的第一个单词，得到不同的sql类型标识，标识请看这个类的静态final常量定义:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> OTHER = -<span class="number">1</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> BEGIN = <span class="number">1</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> COMMIT = <span class="number">2</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DELETE = <span class="number">3</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> INSERT = <span class="number">4</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> REPLACE = <span class="number">5</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> ROLLBACK = <span class="number">6</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SELECT = <span class="number">7</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SET = <span class="number">8</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SHOW = <span class="number">9</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> START = <span class="number">10</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UPDATE = <span class="number">11</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> KILL = <span class="number">12</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SAVEPOINT = <span class="number">13</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> USE = <span class="number">14</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> EXPLAIN = <span class="number">15</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> EXPLAIN2 = <span class="number">151</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> KILL_QUERY = <span class="number">16</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> HELP = <span class="number">17</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MYSQL_CMD_COMMENT = <span class="number">18</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MYSQL_COMMENT = <span class="number">19</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CALL = <span class="number">20</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DESCRIBE = <span class="number">21</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> LOCK = <span class="number">22</span>;</div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UNLOCK = <span class="number">23</span>;</div><div class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> LOAD_DATA_INFILE_SQL = <span class="number">99</span>;</div><div class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DDL = <span class="number">100</span>;</div></pre></td></tr></table></figure>
+<p>用int数值来表示不同的sql类型，如<code>SELECT</code>是用数字7表示。</p>
+<p>(3) 然后根据解析到的sql类型，进入不同的逻辑分支，这体现在<code>ServerQueryHandler</code>类的switch代码段。对于特定的逻辑处理，封装到特定的<code>Handler</code>类里面进行处理，比如sql类型为SET的，使用<code>SetHandler</code>类进行处理，对于SELECT类型，使用<code>SelectHandler</code>类进行处理。</p>
+<p>我们举SELECT类型来做说明，mysql常用的SELECT开头的sql语法大致有:</p>
+<ul>
+<li>select database()</li>
+<li>select user()</li>
+<li>select last_insert_id()</li>
+<li>select version()</li>
+<li>select查询语句</li>
+</ul>
+<p>那么在<code>SelectHandler</code>类里面，也实现了对这些语法的解析，<strong>在这个类里面，又需要进一步解析select后面跟着的词，来进行下一轮的switch分支处理</strong>。比如当解析到select后面跟着database()，那么就进行<code>select database()</code>的逻辑处理。这一步的解析任务落在<code>ServerParseSelect</code>类上。</p>
+<blockquote>
+<p>感兴趣的同学自己搜索一下SelectHandler和ServerParseSelect这两个类。</p>
+</blockquote>
+<h2 id="2-2-深解析"><a href="#2-2-深解析" class="headerlink" title="2.2 深解析"></a>2.2 深解析</h2><p>前面说到，深解析是利用alibaba的druid sql parser来完成的。对于mysql语法，使用的是<code>MysqlStatementParser</code>来进行解析，通过以下代码，我们就可以解析得到一个sql的所有信息:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">String sql = <span class="string">"select * from customer where id = 1"</span>;</div><div class="line">SQLStatementParser parser = <span class="keyword">new</span> MysqlStatementParser(sql);</div><div class="line">SQLStatement stmt = parser.parseStatement();</div></pre></td></tr></table></figure>
+<blockquote>
+<p>druid parser的实现比较复杂(需要涉及编译原理课程词法解析器和语法解析器的原理知识)，代码也多。我没有研究过它的代码，感兴趣的同学可以自己去看看。这里我们关注它的api调用既可。</p>
+</blockquote>
+<p><code>SQLStatement</code>是druid定义的一个统一的接口，不同数据库不同sql语法的statement都会实现该接口，比如上面的语句，对应的实现类是<code>SQLSelectStatement</code>。</p>
+<p><strong>mycat的sql深解析逻辑代码调用耦合在sql路由模块里面</strong>，具体位置对应到<code>DruidMycatRouteStrategy</code>的<strong>routeNormalSqlWithAST</strong>方法里面，如下所示:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> RouteResultset <span class="title">routeNormalSqlWithAST</span><span class="params">(SchemaConfig schema,</span></span></div><div class="line">		String stmt, RouteResultset rrs, String charset,</div><div class="line">		LayerCachePool cachePool) <span class="keyword">throws</span> SQLNonTransientException &#123;</div><div class="line">	</div><div class="line">	<span class="comment">/**</span></div><div class="line">	 *  只有mysql时只支持mysql语法</div><div class="line">	 */</div><div class="line">	SQLStatementParser parser = <span class="keyword">null</span>;</div><div class="line">	<span class="keyword">if</span> (schema.isNeedSupportMultiDBType()) &#123;</div><div class="line">		parser = <span class="keyword">new</span> MycatStatementParser(stmt);</div><div class="line">	&#125; <span class="keyword">else</span> &#123;</div><div class="line">		parser = <span class="keyword">new</span> MySqlStatementParser(stmt); </div><div class="line">	&#125;</div><div class="line"></div><div class="line">	MycatSchemaStatVisitor visitor = <span class="keyword">null</span>;</div><div class="line">	SQLStatement statement;</div><div class="line">	</div><div class="line">	<span class="comment">/**</span></div><div class="line">	 * 解析出现问题统一抛SQL语法错误</div><div class="line">	 */</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">		statement = parser.parseStatement();</div><div class="line">           visitor = <span class="keyword">new</span> MycatSchemaStatVisitor();</div><div class="line">	&#125; <span class="keyword">catch</span> (Exception t) &#123;</div><div class="line">        LOGGER.error(<span class="string">"DruidMycatRouteStrategyError"</span>, t);</div><div class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> SQLSyntaxErrorException(t);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="comment">/**</span></div><div class="line">	 * 检验unsupported statement</div><div class="line">	 */</div><div class="line">	checkUnSupportedStatement(statement);</div><div class="line"></div><div class="line"></div><div class="line">	DruidParser druidParser = DruidParserFactory.create(schema, statement, visitor);</div><div class="line">	druidParser.parser(schema, rrs, statement, stmt,cachePool,visitor);</div><div class="line"></div><div class="line">	<span class="comment">// ...</span></div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们应该如何得到SQLStatement具体内容呢？在druid里面主要通过visitor方式解析和statement方式解析得到。有些类型的SQLStatement通过visitor解析足够了，但是有些只能通过statement解析才能得到所有信息，而有些需要通过两种方式解析才能得到完整信息。基于上面的原因考虑，在mycat中定义了<code>DruidParser</code>接口类和其对应的实现类来实现这个需求，如下类图所示:</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-sql-parser/mycat-druid-parser-classdiagram.jpg" alt="mycat-druid-parser-classdiagram"></p>
+<p>在mycat里面通过调用<code>DruidParser</code>的parser方法来满足上面提到的解析需求，实现的通用逻辑代码在<code>DefaultDruidParser</code>的parser方法里面，如下所示:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 使用MycatSchemaStatVisitor解析,得到tables、tableAliasMap、conditions等</div><div class="line"> * <span class="doctag">@param</span> schema</div><div class="line"> * <span class="doctag">@param</span> stmt</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">parser</span><span class="params">(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, String originSql,LayerCachePool cachePool,MycatSchemaStatVisitor schemaStatVisitor)</span> <span class="keyword">throws</span> SQLNonTransientException </span>&#123;</div><div class="line">	ctx = <span class="keyword">new</span> DruidShardingParseInfo();</div><div class="line">	<span class="comment">//设置为原始sql，如果有需要改写sql的，可以通过修改SQLStatement中的属性，然后调用SQLStatement.toString()得到改写的sql</span></div><div class="line">	ctx.setSql(originSql);</div><div class="line">	<span class="comment">//通过visitor解析</span></div><div class="line">	visitorParse(rrs,stmt,schemaStatVisitor);</div><div class="line">	<span class="comment">//通过Statement解析</span></div><div class="line">	statementParse(schema, rrs, stmt);</div><div class="line">	</div><div class="line">	<span class="comment">//改写sql：如insert语句主键自增长的可以</span></div><div class="line">	changeSql(schema, rrs, stmt,cachePool);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>visitorParse</strong>和<strong>statementParse</strong>两个方法留给子类根据实际处理情况去实现。例如，<code>DruidSelectParser</code>只实现了statementParse方法。</p>
+<p>这里还有个问题，就是mycat如何确定一个具体的DruidParser实现类去进行处理？ —— DruidParser由<strong>DruidParserFactory</strong>的<strong>create</strong>方法负责创建，具体应该创建哪个DruidParser子类，是在DruidParserFactory的create方法里面根据druid解析得到的SQLStatement对象进行判断的。所以在<strong>outeNormalSqlWithAST</strong>方法解析得到SQLStatement之后，需要利用DruidParserFactory来构造具体的DruidParser。具体的判断逻辑如下代码所示:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> DruidParser <span class="title">create</span><span class="params">(SchemaConfig schema, SQLStatement statement, SchemaStatVisitor visitor)</span></span></div><div class="line">   &#123;</div><div class="line">       DruidParser parser = <span class="keyword">null</span>;</div><div class="line">       <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> SQLSelectStatement)</div><div class="line">       &#123;</div><div class="line">           <span class="keyword">if</span>(schema.isNeedSupportMultiDBType())</div><div class="line">           &#123;</div><div class="line">               parser = getDruidParserForMultiDB(schema, statement, visitor);</div><div class="line"></div><div class="line">           &#125;</div><div class="line"></div><div class="line">           <span class="keyword">if</span> (parser == <span class="keyword">null</span>)</div><div class="line">           &#123;</div><div class="line">               parser = <span class="keyword">new</span> DruidSelectParser();</div><div class="line">           &#125;</div><div class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> MySqlInsertStatement)</div><div class="line">       &#123;</div><div class="line">           parser = <span class="keyword">new</span> DruidInsertParser();</div><div class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> MySqlDeleteStatement)</div><div class="line">       &#123;</div><div class="line">           parser = <span class="keyword">new</span> DruidDeleteParser();</div><div class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> MySqlCreateTableStatement)</div><div class="line">       &#123;</div><div class="line">           parser = <span class="keyword">new</span> DruidCreateTableParser();</div><div class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> MySqlUpdateStatement)</div><div class="line">       &#123;</div><div class="line">           parser = <span class="keyword">new</span> DruidUpdateParser();</div><div class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> SQLAlterTableStatement)</div><div class="line">       &#123;</div><div class="line">           parser = <span class="keyword">new</span> DruidAlterTableParser();</div><div class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (statement <span class="keyword">instanceof</span> MySqlLockTableStatement) &#123;</div><div class="line">       	parser = <span class="keyword">new</span> DruidLockTableParser();</div><div class="line">       &#125; <span class="keyword">else</span></div><div class="line">       &#123;</div><div class="line">           parser = <span class="keyword">new</span> DefaultDruidParser();</div><div class="line">       &#125;</div><div class="line"></div><div class="line">       <span class="keyword">return</span> parser;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<h1 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h1><p>大部分文章会把sql解析模块和sql路由模块结合在一起讲，但在这里，我还是把它单独拆出来，单独分析它的功能和代码。虽然sql解析模块会耦合在路由模块里面，但是它并非完全为路由模块服务，它同时也为结果集后处理模块服务。我们也只有理解了sql解析模块，才能更好的理解路由模块和结果集后处理模块。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Mycat/" rel="tag"># Mycat</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/09/21/mycat-server-prepare-introduction/" rel="next" title="Mycat预处理功能分析">
+                <i class="fa fa-chevron-left"></i> Mycat预处理功能分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/16/mysql-gr-introduction/" rel="prev" title="MySQL Group Replication介绍">
+                MySQL Group Replication介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-sql解析模块功能说明"><span class="nav-number">1.</span> <span class="nav-text">1. sql解析模块功能说明</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-浅解析"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 浅解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-深解析"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 深解析</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-sql解析模块源码分析"><span class="nav-number">2.</span> <span class="nav-text">2. sql解析模块源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-浅解析"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 浅解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-深解析"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 深解析</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-总结"><span class="nav-number">3.</span> <span class="nav-text">3. 总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,818 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="MySQL," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="mysql group replication，组复制，提供了多写(multi-master update)的特性，增强了原有的mysql的高可用架构。mysql group replication基于mysql插件架构实现，本身就是一个mysql插件。
+提供的特性:
+
+多写，写冲突检测
+良好的扩展能力，可动态增删节点，组成员自动管理
+组内高可用
+确保组内数据最终一致性【重要】(通过分布式协议和分">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL Group Replication技术点">
+<meta property="og:url" content="http://yoursite.com/2016/12/20/mysql-gr-tech/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="mysql group replication，组复制，提供了多写(multi-master update)的特性，增强了原有的mysql的高可用架构。mysql group replication基于mysql插件架构实现，本身就是一个mysql插件。
+提供的特性:
+
+多写，写冲突检测
+良好的扩展能力，可动态增删节点，组成员自动管理
+组内高可用
+确保组内数据最终一致性【重要】(通过分布式协议和分">
+<meta property="og:image" content="http://mysqlhighavailability.com/mysqlha/gr/doc/_images/gr_plugin_blocks.png">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/tech_info_02.png?imageView2/2/w/768">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/tech_info_03.png?imageView2/2/w/768">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/tech_info_01.png?imageView2/2/w/768">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_1.png?imageView2/2/w/450">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_2.png?imageView2/2/w/512">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_3.png?imageView2/2/w/512">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_4.png?imageView2/2/w/512">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_5.png?imageView2/2/w/512">
+<meta property="og:updated_time" content="2017-08-05T07:02:05.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL Group Replication技术点">
+<meta name="twitter:description" content="mysql group replication，组复制，提供了多写(multi-master update)的特性，增强了原有的mysql的高可用架构。mysql group replication基于mysql插件架构实现，本身就是一个mysql插件。
+提供的特性:
+
+多写，写冲突检测
+良好的扩展能力，可动态增删节点，组成员自动管理
+组内高可用
+确保组内数据最终一致性【重要】(通过分布式协议和分">
+<meta name="twitter:image" content="http://mysqlhighavailability.com/mysqlha/gr/doc/_images/gr_plugin_blocks.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/12/20/mysql-gr-tech/"/>
+
+
+
+
+
+  <title> MySQL Group Replication技术点 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/20/mysql-gr-tech/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MySQL Group Replication技术点
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-20T00:00:00+08:00">
+                2016-12-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL.GR</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>mysql group replication，组复制，提供了多写(multi-master update)的特性，增强了原有的mysql的高可用架构。mysql group replication基于mysql插件架构实现，本身就是一个mysql插件。</p>
+<p>提供的特性:</p>
+<ul>
+<li>多写，写冲突检测</li>
+<li>良好的扩展能力，可动态增删节点，组成员自动管理</li>
+<li>组内高可用</li>
+<li>确保组内数据最终一致性<strong>【重要】</strong>(通过分布式协议和分布式recovery机制保证)</li>
+</ul>
+<a id="more"></a>
+<h1 id="1-架构"><a href="#1-架构" class="headerlink" title="1. 架构"></a>1. 架构</h1><p><img src="http://mysqlhighavailability.com/mysqlha/gr/doc/_images/gr_plugin_blocks.png" alt="gr_plugin_blocks" width="600"></p>
+<p>组复制基于mysql插件架构实现，本身作为一个mysql插件而存在。如上图所示，蓝色和绿色两部分表示组复制架构。</p>
+<p>组复制依赖mysql server主模块(上图灰色部分)以及mysql的复制架构，包括binary log caches、binary log applier模块、GTID、relay log模块、replication applier threads(组复制distributed recovery第一个阶段会使用这些线程)和performance_schema(用于存储监控组复制的状态信息)。</p>
+<p>上图架构中各个模块的作用简单介绍如下:</p>
+<ul>
+<li><strong>APIs</strong></li>
+</ul>
+<p>API层提供了组复制与上层mysql server交互的接口。上层(mysql server)会主动通知下层(组复制)根据它的状态去做对应的动作，包括server的启动、恢复、接受连接、提交事务等等。组复制根据这些接口调用做出对应的响应动作。</p>
+<ul>
+<li><strong>Capture、Applier、Recovery</strong></li>
+</ul>
+<p>组复制中的三个核心模块，当上层API发生调用，将根据调用类型路由到下面这三个模块执行相应的逻辑。Capture模块负责追踪事务执行的上下文信息；Applier模块负责将远程事务加载到本地执行；Recovery模块管理组内节点的recovery。</p>
+<ul>
+<li><strong>Replication Protocol Logics</strong></li>
+</ul>
+<p>Replicaiton Protocol Logics模块实现了replication协议的逻辑，逻辑功能包括: 处理冲突检测、接收并传播事务到组内去执行。</p>
+<ul>
+<li><strong>Group Communication System API</strong></li>
+</ul>
+<p>提供状态机(Replication State Machine)的高层抽象API，以此分离与下层协议实现的逻辑。</p>
+<ul>
+<li><strong>Group Communication Engine</strong></li>
+</ul>
+<p>根据上层的状态机API的抽象，这一层主要提供Paxos协议变种的核心实现。</p>
+<h1 id="2-Group"><a href="#2-Group" class="headerlink" title="2. Group"></a>2. Group</h1><p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/tech_info_02.png?imageView2/2/w/768" alt="mysql_group_replication_dia"></p>
+<p>一个Group由若干个mysql节点组成，每个Group有自己的唯一命名来标识，格式为UUID。Group内的mysql节点数据保持一致。一个组可以动态增加和删除节点。</p>
+<p>组成员管理自动化。新增一个节点到一个组里面，这个节点会自动同步自身数据跟组内其他节点保持一致。保持同步会利用Asynchronous MySQL replication。当一个节点从一个组里移除，将自动更改group的配置，以让其他节点知道这个节点的移除。</p>
+<h1 id="3-Multi-Primary"><a href="#3-Multi-Primary" class="headerlink" title="3. Multi Primary"></a>3. Multi Primary</h1><p>组复制有两种运行模式: (1) Single-Primary Mode 和 (2) Multi-Primary Mode，其中Single-Primary Mode表示一个组里面只有一个节点用于写，而Multi-Primary Mode下组内所有节点都可以参与写，事务的提交可以在组内的任意一个节点进行。</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/tech_info_03.png?imageView2/2/w/768" alt="multi_primary_example"></p>
+<p>看起来Multi-Primary模式好像很屌！但是，这个模式下目前存在挺多的使用限制：</p>
+<h2 id="3-1-并发写冲突"><a href="#3-1-并发写冲突" class="headerlink" title="3.1 并发写冲突"></a>3.1 并发写冲突</h2><p>Multi-Primary模式下，对于事务的提交，需要组内所有节点进行通讯，共同决定事务是否可以提交。高并发模式下有可能出现分布式提交冲突——<strong>不同的节点并发提交的事务操作了同一行数据</strong>。group replication提供的乐观的解决方案是——先提交(时间序靠前的)的事务，能够正确被提交，而后面提交的事务，将会失败。</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/tech_info_01.png?imageView2/2/w/768" alt="multi_primary_update_conflict"></p>
+<blockquote>
+<p>官方建议，避免并发写冲突的最好的做法是将这些会产生冲突的写事务放到同一个节点上进行提交。</p>
+</blockquote>
+<h2 id="3-2-并发DDL"><a href="#3-2-并发DDL" class="headerlink" title="3.2 并发DDL"></a>3.2 并发DDL</h2><p>MySQL目前不支持事务类型的DDL，也就是说DDL操作不是一个原子操作，在Multi-Primary模式下，DDL操作并发地在多个节点执行，很有可能产生数据不一致的情况。因此，官方提醒，在Multi-Primary下DDL操作最好在同一个节点上执行。</p>
+<blockquote>
+<p>如果运行在Single-Primary模式下，就没有上面所提到的限制了。</p>
+</blockquote>
+<h1 id="4-Distributed-Recovery"><a href="#4-Distributed-Recovery" class="headerlink" title="4. Distributed Recovery"></a>4. Distributed Recovery</h1><p>当一个新节点(被叫作joiner)加入一个group，需要从group里面其他节点同步状态。这个新节点从其他节点获取这些落后数据，并接受新提交的事务，<strong>最终保持</strong>与group内其他节点数据一致的这个过程，称为distributed recovery(DR)。DR过程分为两个阶段:</p>
+<h2 id="4-1-阶段1"><a href="#4-1-阶段1" class="headerlink" title="4.1 阶段1"></a>4.1 阶段1</h2><p>Joiner选择group里面的一个节点作为复制源(这个节点被称作donor)，基于原有的异步复制技术进行recovery。这个过程会建立从donor到joiner的replication channel，joiner不断接收从donor端发送的binary log，apply到自身。于此同时，joiner还会监听并缓存group里面自从它加入以来产生的新事务。阶段1结束后，将会关闭之前建立在donor和joiner之间的replication channel。</p>
+<blockquote>
+<p>donor有可能在这个阶段挂掉，此时joiner将自动选择集群内的其他一个存活节点作为donor，继续之前的recovery。这个过程无需人为干预。</p>
+</blockquote>
+<h2 id="4-2-阶段2"><a href="#4-2-阶段2" class="headerlink" title="4.2 阶段2"></a>4.2 阶段2</h2><p>阶段2，joiner执行在阶段1缓存队列里的新事务(直到缓存队列为空)，然后将joiner的状态标记为<code>online</code>，表示这个节点的数据已经跟其他节点保持一致，可以被正常访问。</p>
+<blockquote>
+<p>只有online的节点才能正常接收用户请求。</p>
+</blockquote>
+<h2 id="4-3-Recovering-From-a-Point-in-time"><a href="#4-3-Recovering-From-a-Point-in-time" class="headerlink" title="4.3 Recovering From a Point-in-time"></a>4.3 Recovering From a Point-in-time</h2><p>这里有个问题: 在阶段1，joiner怎么知道它在什么时候会完成所有缺失数据的recovery，单单依靠GTID机制是不够的(依靠GTID机制只能让joiner知道它是否少了这部分数据)。这个时候，需要有另外一个机制，来代表一个时间点——这个时间点能够标识阶段1的结束，也就是说在这个时间点上，joiner已经完成了从donor上所有缺失数据的recovery，接下来可以进入阶段2了。</p>
+<p>这个机制，就是<strong>binary log view change markers</strong>，在阶段1传输binary log流中，会带上view change markers。那么joiner在接受到binary log的时候，就可以利用这些标识来判断那个时间点的到来。</p>
+<h2 id="4-4-View-and-View-Changes"><a href="#4-4-View-and-View-Changes" class="headerlink" title="4.4 View and View Changes"></a>4.4 View and View Changes</h2><p>在解释view change markers之前，需要介绍view change markers关联的概念: <em>View</em> 和 <em>View Changes</em>。</p>
+<ul>
+<li>View</li>
+</ul>
+<p>一个Group里面所有节点在某个时间点上达成的配置，对外表示为一个View。</p>
+<ul>
+<li>View Changes</li>
+</ul>
+<p>View Changes指引起Group配置发生变化的事件，比如新增节点，删除节点。</p>
+<p>每个View有一个唯一标识(View Identifier)进行标识。当发生View Changes时，就会生成这样一个唯一标识来表示这个新的View。</p>
+<p>View changes产生的view ids作为新节点与donor同步数据的临界点。View change事件对应到binary log里面是一个新binary log event的实现——<strong>view change log event</strong>。在这个view change log event里面携带了view id。</p>
+<p>假设在之前的multi-primary部署示例完成后，我们通过登陆S2执行以下语句检索到view change event log:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql &gt; show binlog events\G;</div></pre></td></tr></table></figure>
+<p>可以看到如下view change event log:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">*************************** 9. row ***************************</div><div class="line">   Log_name: binlog.000001</div><div class="line">        Pos: 742</div><div class="line"> Event_type: View_change</div><div class="line">  Server_id: 1</div><div class="line">End_log_pos: 881</div><div class="line">       Info: view_id=14817781596395401:1</div></pre></td></tr></table></figure>
+<h2 id="4-5-Distributed-Recovery-Example"><a href="#4-5-Distributed-Recovery-Example" class="headerlink" title="4.5 Distributed Recovery Example"></a>4.5 Distributed Recovery Example</h2><p>接下来我们分析一个例子: 一个新节点加入一个group的过程</p>
+<h3 id="4-5-1-Begin-Stable-Group"><a href="#4-5-1-Begin-Stable-Group" class="headerlink" title="4.5.1 Begin: Stable Group"></a>4.5.1 Begin: Stable Group</h3><p>一开始group有3个节点S1、S2、S3，整个group处于稳定状态</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_1.png?imageView2/2/w/450" alt="gr_recovery_1"></p>
+<h3 id="4-5-2-View-Change-Member-Joins"><a href="#4-5-2-View-Change-Member-Joins" class="headerlink" title="4.5.2 View Change: Member Joins"></a>4.5.2 View Change: Member Joins</h3><p>接下来新节点S4准备加入group，引起view changes(VC4)。所有的节点都会在缓存队列里面缓存view change event log到队列。同时，新节点S4会选择group里面的某个节点作为donor。</p>
+<blockquote>
+<p>所有的节点都要缓存view change event log到队列，因为这个event log之前有可能还存在着未apply的event log，这些event log是属于old view的。</p>
+</blockquote>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_2.png?imageView2/2/w/512" alt="gr_recovery_2"></p>
+<h3 id="4-5-3-State-Transfer-Catching-Up"><a href="#4-5-3-State-Transfer-Catching-Up" class="headerlink" title="4.5.3 State Transfer: Catching Up"></a>4.5.3 State Transfer: Catching Up</h3><p>当S4选择好donor后，就会建立与donor的replication channel，基于async replication机制从donor上同步状态进行recovery，直到S4遇到期望的view change marker为止。</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_3.png?imageView2/2/w/512" alt="gr_recovery_3"></p>
+<p>于此同时，S4也会不断地接受group里面下发的新提交事务，缓存到队列里面。</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_4.png?imageView2/2/w/512" alt="gr_recovery_4"></p>
+<h3 id="4-5-4-Finish-Caught-Up"><a href="#4-5-4-Finish-Caught-Up" class="headerlink" title="4.5.4 Finish: Caught Up"></a>4.5.4 Finish: Caught Up</h3><p>当S4遇到期望的view change marker(根据view change event log 判断)以后，与donor之间的replication channel将会被关闭，这个时候，就会从之前的缓存队列里面取新的事务(图示中的T22)进行apply，直到缓存队列为空，然后就可以将S4的状态标记为online，这就是阶段2的主要动作。</p>
+<p>注意，阶段2的执行周期是不确定的，取决于系统的负载情况，因为在阶段2期间，有可能系统不断产生新的事务。系统的负载越高，产生的事务会越多，那么阶段2经历的时间自然也就越长了。</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mysql-gr-tech-info/gr_recovery_5.png?imageView2/2/w/512" alt="gr_recovery_5"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/16/mysql-gr-introduction/" rel="next" title="MySQL Group Replication介绍">
+                <i class="fa fa-chevron-left"></i> MySQL Group Replication介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/" rel="prev" title="MySQL Group Replication 搭建[Multi-Primary Mode]">
+                MySQL Group Replication 搭建[Multi-Primary Mode] <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-架构"><span class="nav-number">1.</span> <span class="nav-text">1. 架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-Group"><span class="nav-number">2.</span> <span class="nav-text">2. Group</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-Multi-Primary"><span class="nav-number">3.</span> <span class="nav-text">3. Multi Primary</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-并发写冲突"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 并发写冲突</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-并发DDL"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 并发DDL</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-Distributed-Recovery"><span class="nav-number">4.</span> <span class="nav-text">4. Distributed Recovery</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#4-1-阶段1"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 阶段1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-2-阶段2"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 阶段2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-3-Recovering-From-a-Point-in-time"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 Recovering From a Point-in-time</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-4-View-and-View-Changes"><span class="nav-number">4.4.</span> <span class="nav-text">4.4 View and View Changes</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-5-Distributed-Recovery-Example"><span class="nav-number">4.5.</span> <span class="nav-text">4.5 Distributed Recovery Example</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-1-Begin-Stable-Group"><span class="nav-number">4.5.1.</span> <span class="nav-text">4.5.1 Begin: Stable Group</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-2-View-Change-Member-Joins"><span class="nav-number">4.5.2.</span> <span class="nav-text">4.5.2 View Change: Member Joins</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-3-State-Transfer-Catching-Up"><span class="nav-number">4.5.3.</span> <span class="nav-text">4.5.3 State Transfer: Catching Up</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-4-Finish-Caught-Up"><span class="nav-number">4.5.4.</span> <span class="nav-text">4.5.4 Finish: Caught Up</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,741 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase,Phoenix," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="Phoenix官方提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。但是在使用过程中发现导入几百万数据会在reduce阶段抛OOM异常从而导致MapRedu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Phoenix4.6 BulkLoad OOM">
+<meta property="og:url" content="http://yoursite.com/2016/05/08/phoenix4.6-bulkload-oom/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="Phoenix官方提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。但是在使用过程中发现导入几百万数据会在reduce阶段抛OOM异常从而导致MapRedu">
+<meta property="og:updated_time" content="2017-08-05T06:40:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Phoenix4.6 BulkLoad OOM">
+<meta name="twitter:description" content="Phoenix官方提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。但是在使用过程中发现导入几百万数据会在reduce阶段抛OOM异常从而导致MapRedu">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/05/08/phoenix4.6-bulkload-oom/"/>
+
+
+
+
+
+  <title> Phoenix4.6 BulkLoad OOM | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix4.6-bulkload-oom/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Phoenix4.6 BulkLoad OOM
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-08T00:00:00+08:00">
+                2016-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/HBase-Phoenix/" itemprop="url" rel="index">
+                    <span itemprop="name">HBase.Phoenix</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Phoenix官方提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。但是在使用过程中发现导入几百万数据会在reduce阶段抛OOM异常从而导致MapReduce任务失败。这篇文章将介绍如何解决BulkLoad产生OOM的问题。</p>
+<a id="more"></a>
+<h2 id="1-软件环境"><a href="#1-软件环境" class="headerlink" title="1. 软件环境"></a>1. 软件环境</h2><ul>
+<li>cdh5.4 </li>
+<li>hbase 1.0</li>
+<li>phoenix-4.6-hbase-1.0</li>
+</ul>
+<p><strong>【注意】</strong></p>
+<p>官方提供的phoenix4.6-hbase-1.0版本并不兼容cdh5.4版本的hbase，适配方法请查看之前写的一篇文章—— <a href="http://blog.csdn.net/d6619309/article/details/50358309" target="_blank" rel="external">整合phoenix4.6.0-HBase-1.0到cdh5.4</a></p>
+<h2 id="2-Phoenix-BulkLoad简介"><a href="#2-Phoenix-BulkLoad简介" class="headerlink" title="2. Phoenix BulkLoad简介"></a>2. Phoenix BulkLoad简介</h2><p>Phoenix 提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。</p>
+<blockquote>
+<p>psql实际上是采用单线程的方式来执行导入，所以效率肯定比不上使用mapreduce方式的CsvBulkLoadTool。</p>
+</blockquote>
+<p>关于CsvBulkLoadTool这个工具类的详细介绍及使用，点击下面链接查看官网介绍：</p>
+<p><a href="https://phoenix.apache.org/bulk_dataload.html" target="_blank" rel="external">phoenix bulk load</a></p>
+<h2 id="3-BulkLoad-OOM"><a href="#3-BulkLoad-OOM" class="headerlink" title="3. BulkLoad OOM"></a>3. BulkLoad OOM</h2><h3 id="3-1-重现"><a href="#3-1-重现" class="headerlink" title="3.1 重现"></a>3.1 重现</h3><p>根据官网的使用说明进行较大规模数据集的测试：</p>
+<p>【测试表】</p>
+<p>TEST，44列，5000w行，数据文件大小大概为11G</p>
+<p>依照官网使用方式执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar phoenix-&lt;version&gt;-client.jar org.apache.phoenix.mapreduce.CsvBulkLoadTool --table EXAMPLE --input /data/example.csv</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar /data/phoenix-default/phoenix-4.6.0-HBase-1.0-client.jar org.apache.phoenix.mapreduce.CsvBulkLoadTool --table TEST --input /data/test.csv</div></pre></td></tr></table></figure>
+<p>发现在reduce阶段到一定进度一直抛OOM异常，直到所有重试失败，从而最终mapreduce任务失败。reduce异常日志如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">2016-05-04 03:01:25,644 INFO [communication thread] org.apache.hadoop.mapred.Task: Communication exception: java.lang.OutOfMemoryError: Java heap space</div><div class="line">    at java.lang.StringCoding.encode(StringCoding.java:338)</div><div class="line">    at java.lang.String.getBytes(String.java:916)</div><div class="line">    at java.io.UnixFileSystem.getBooleanAttributes0(Native Method)</div><div class="line">    at java.io.UnixFileSystem.getBooleanAttributes(UnixFileSystem.java:242)</div><div class="line">    at java.io.File.isDirectory(File.java:843)</div><div class="line">    at org.apache.hadoop.yarn.util.ProcfsBasedProcessTree.getProcessList(ProcfsBasedProcessTree.java:495)</div><div class="line">    at org.apache.hadoop.yarn.util.ProcfsBasedProcessTree.updateProcessTree(ProcfsBasedProcessTree.java:210)</div><div class="line">    at org.apache.hadoop.mapred.Task.updateResourceCounters(Task.java:847)</div><div class="line">    at org.apache.hadoop.mapred.Task.updateCounters(Task.java:986)</div><div class="line">    at org.apache.hadoop.mapred.Task.access$500(Task.java:79)</div><div class="line">    at org.apache.hadoop.mapred.Task$TaskReporter.run(Task.java:735)</div><div class="line">    at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line">2016-05-04 03:01:25,644 FATAL [main] org.apache.hadoop.mapred.YarnChild: Error running child : java.lang.OutOfMemoryError: Java heap space</div><div class="line">    at java.lang.StringCoding.decode(StringCoding.java:187)</div><div class="line">    at java.lang.String.&lt;init&gt;(String.java:416)</div><div class="line">    at java.lang.String.&lt;init&gt;(String.java:481)</div><div class="line">    at org.apache.hadoop.io.WritableUtils.readString(WritableUtils.java:126)</div><div class="line">    at org.apache.phoenix.mapreduce.bulkload.CsvTableRowkeyPair.readFields(CsvTableRowkeyPair.java:82)</div><div class="line">    at org.apache.hadoop.io.serializer.WritableSerialization$WritableDeserializer.deserialize(WritableSerialization.java:71)</div><div class="line">    at org.apache.hadoop.io.serializer.WritableSerialization$WritableDeserializer.deserialize(WritableSerialization.java:42)</div><div class="line">    at org.apache.hadoop.mapreduce.task.ReduceContextImpl.nextKeyValue(ReduceContextImpl.java:142)</div><div class="line">    at org.apache.hadoop.mapreduce.task.ReduceContextImpl$ValueIterator.next(ReduceContextImpl.java:239)</div><div class="line">    at org.apache.phoenix.mapreduce.CsvToKeyValueReducer.reduce(CsvToKeyValueReducer.java:40)</div><div class="line">    at org.apache.phoenix.mapreduce.CsvToKeyValueReducer.reduce(CsvToKeyValueReducer.java:33)</div><div class="line">    at org.apache.hadoop.mapreduce.Reducer.run(Reducer.java:171)</div><div class="line">    at org.apache.hadoop.mapred.ReduceTask.runNewReducer(ReduceTask.java:627)</div><div class="line">    at org.apache.hadoop.mapred.ReduceTask.run(ReduceTask.java:389)</div><div class="line">    at org.apache.hadoop.mapred.YarnChild$2.run(YarnChild.java:163)</div><div class="line">    at java.security.AccessController.doPrivileged(Native Method)</div><div class="line">    at javax.security.auth.Subject.doAs(Subject.java:415)</div><div class="line">    at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1671)</div><div class="line">    at org.apache.hadoop.mapred.YarnChild.main(YarnChild.java:158)</div></pre></td></tr></table></figure>
+<h3 id="3-2-分析"><a href="#3-2-分析" class="headerlink" title="3.2 分析"></a>3.2 分析</h3><p>追踪源码发现CsvBulkLoadTool使用的reducer类是CsvToKeyValueReducer，这个类有如下说明：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * Reducer class for the CSVBulkLoad job. </div><div class="line"> * Performs similar functionality to &#123;@link KeyValueSortReducer&#125;</div><div class="line"> * </div><div class="line"> */</div></pre></td></tr></table></figure>
+<p>而KeyValueSortReducer这个类是hbase官方提供的bulk load里面的一个reducer类。而它的说明如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * Emits sorted KeyValues.</div><div class="line"> * Reads in all KeyValues from passed Iterator, sorts them, then emits</div><div class="line"> * KeyValues in sorted order.  If lots of columns per row, it will use lots of</div><div class="line"> * memory sorting.</div><div class="line"> * @see HFileOutputFormat</div><div class="line"> */</div></pre></td></tr></table></figure>
+<p>KeyValueSortReducer提醒我们如果一行数据有很多列，那么会使用比较多的内存(体现在TreeSet上)进行排序。但是抛开这个提醒也不至于使得reduce过程发生OOM，因为依照mapreduce的原理，CsvToKeyValueReducer应该是将相同key里面的values进行迭代（一次reduce方法的调用处理相同key所对应的所有列数据——KeyValue），放到TreeSet里面进行排序，最后通过context写出。除非一行里面很多列，并且列数据很大很大，大到足矣撑爆reduce的最大内存（CDH5.4默认的reduce堆内存为768M），而我们的场景里面一行数据的预估大小为4KB，远不足以使得reducer发生OOM！</p>
+<p>一开始尝试在网上检索相关资料，虽然有人也碰到了相同的问题，但是都没有准确的答复。最后，偶然机会下通过google检索到一个关于phoenix 4.7的issue，提到了这个异常出现的原因：</p>
+<p><a href="https://issues.apache.org/jira/browse/PHOENIX-2649" target="_blank" rel="external">issue : PHOENIX-2649</a></p>
+<p>根据里面的描述信息，CsvToKeyValueReducer在reduce阶段会OOM的原因在于对应传入的key，即CsvTableRowkeyPair在map之后并没有被正确地处理，从而引起所有的CsvTableRowkeyPair都被分配到单个reduce调用。<strong>注意，是一次reduce调用传入了所有map处理后的结果。</strong>比如上面我们导入5000W数据(44 columns per row)，那么传进单个reduce方法的values总共有<strong>（5000W * 44）</strong>个，所以，在TreeSet不断添加元素的过程就发生了OOM异常，从而导致mapreduce任务失败。</p>
+<p> 最终追溯到的错误根源在于，CsvTableRowkeyPair里的静态内部类Comparator没有正确处理CsvTableRowkeyPair里面的tableName以及 rowkey的与其他CsvTableRowkeyPair的tableName和rowkey的比较。Comparator的compare方法结果会影响到到reduce的inputKey（即CsvTableRowkeyPair）的分布结果。<strong>在phoenix4.6版本里面，对于不同的CsvTableRowkeyPair（tableName + rowkey），Comparator的compare方法总是返回0（表示相等），从而导致所有的map结果都分配到一个reducer的一次reduce调用上进行处理。</strong></p>
+<p>使用这个单元测试进行测试：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CsvTableRowKeyPairTest</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Test</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testRowKeyPair</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line"></div><div class="line">        testsRowsKeys(<span class="string">"first"</span>, <span class="string">"aa"</span>, <span class="string">"first"</span>, <span class="string">"aa"</span>, <span class="number">0</span>);</div><div class="line">        testsRowsKeys(<span class="string">"first"</span>, <span class="string">"aa"</span>, <span class="string">"first"</span>, <span class="string">"ab"</span>, -<span class="number">1</span>);</div><div class="line">        testsRowsKeys(<span class="string">"second"</span>, <span class="string">"aa"</span>, <span class="string">"first"</span>, <span class="string">"aa"</span>, <span class="number">1</span>);</div><div class="line">        testsRowsKeys(<span class="string">"first"</span>, <span class="string">"aa"</span>, <span class="string">"first"</span>, <span class="string">"aaa"</span>, -<span class="number">1</span>);</div><div class="line">        testsRowsKeys(<span class="string">"first"</span>,<span class="string">"bb"</span>, <span class="string">"first"</span>, <span class="string">"aaaa"</span>, <span class="number">1</span>);</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">testsRowsKeys</span><span class="params">(String aTable, String akey, </span></span></div><div class="line">            String bTable, String bkey, <span class="keyword">int</span> expectedSignum) <span class="keyword">throws</span> IOException &#123;  </div><div class="line"></div><div class="line">        ImmutableBytesWritable arowkey = <span class="keyword">new</span> ImmutableBytesWritable(Bytes.toBytes(akey));</div><div class="line">        CsvTableRowkeyPair pair1 = <span class="keyword">new</span> CsvTableRowkeyPair(aTable, arowkey);</div><div class="line"></div><div class="line">        ImmutableBytesWritable browkey = <span class="keyword">new</span> ImmutableBytesWritable(Bytes.toBytes(bkey));</div><div class="line">        CsvTableRowkeyPair pair2 = <span class="keyword">new</span> CsvTableRowkeyPair(bTable, browkey);</div><div class="line"></div><div class="line">        CsvTableRowkeyPair.Comparator comparator = <span class="keyword">new</span> CsvTableRowkeyPair.Comparator();</div><div class="line"></div><div class="line">        <span class="keyword">try</span>( ByteArrayOutputStream baosA = <span class="keyword">new</span> ByteArrayOutputStream();</div><div class="line">                 ByteArrayOutputStream baosB = <span class="keyword">new</span> ByteArrayOutputStream()) &#123;</div><div class="line">            Assert.assertEquals(expectedSignum , signum(pair1.compareTo(pair2)));</div><div class="line">            pair1.write(<span class="keyword">new</span> DataOutputStream(baosA));</div><div class="line">            pair2.write(<span class="keyword">new</span> DataOutputStream(baosB));</div><div class="line">            Assert.assertEquals(expectedSignum , signum(comparator.compare(baosA.toByteArray(), <span class="number">0</span>, baosA.size(), baosB.toByteArray(), <span class="number">0</span>, baosB.size())));</div><div class="line">            Assert.assertEquals(expectedSignum, -signum(comparator.compare(baosB.toByteArray(), <span class="number">0</span>, baosB.size(), baosA.toByteArray(), <span class="number">0</span>, baosA.size())));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">signum</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> i &gt; <span class="number">0</span> ? <span class="number">1</span>: (i == <span class="number">0</span> ? <span class="number">0</span>: -<span class="number">1</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>调试发现确实在tablename或rowkey不相等的情况下，如testsRowsKeys(“first”, “aa”, “first”, “ab”, -1)，compare的结果也为0（0代表相等）。</strong></p>
+<h3 id="3-3-解决方案"><a href="#3-3-解决方案" class="headerlink" title="3.3 解决方案"></a>3.3 解决方案</h3><p>幸运的是在phoenix4.7版本已经修复了这个bug。因此在4.6版本里面我们只需要根据4.7版本来修改即可修复这个bug。修改后的Comparator类如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"> <span class="comment">/** Comparator optimized for &lt;code&gt;CsvTableRowkeyPair&lt;/code&gt;. */</span></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Comparator</span> <span class="keyword">extends</span> <span class="title">WritableComparator</span> </span>&#123;</div><div class="line"></div><div class="line"><span class="comment">//        private BytesWritable.Comparator comparator = new BytesWritable.Comparator();</span></div><div class="line"></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Comparator</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">super</span>(CsvTableRowkeyPair.class);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(<span class="keyword">byte</span>[] b1, <span class="keyword">int</span> s1, <span class="keyword">int</span> l1, <span class="keyword">byte</span>[] b2, <span class="keyword">int</span> s2, <span class="keyword">int</span> l2)</span> </span>&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line"><span class="comment">//                int vintL1 = WritableUtils.decodeVIntSize(b1[s1]);</span></div><div class="line"><span class="comment">//                int vintL2 = WritableUtils.decodeVIntSize(b2[s2]);</span></div><div class="line"><span class="comment">//                int strL1 = readVInt(b1, s1);</span></div><div class="line"><span class="comment">//                int strL2 = readVInt(b2, s2);</span></div><div class="line"><span class="comment">//                int cmp = compareBytes(b1, s1 + vintL1, strL1, b2, s2 + vintL2, strL2);</span></div><div class="line"><span class="comment">//                if (cmp != 0) &#123;</span></div><div class="line"><span class="comment">//                  return cmp;</span></div><div class="line"><span class="comment">//                &#125;</span></div><div class="line"><span class="comment">//                int vintL3 = WritableUtils.decodeVIntSize(b1[s1 + vintL1 + strL1]);</span></div><div class="line"><span class="comment">//                int vintL4 = WritableUtils.decodeVIntSize(b2[s2 + vintL2 + strL2]);</span></div><div class="line"><span class="comment">//                int strL3 = readVInt(b1, s1 + vintL1 + strL1);</span></div><div class="line"><span class="comment">//                int strL4 = readVInt(b2, s2 + vintL2 + strL2);</span></div><div class="line"><span class="comment">//                return comparator.compare(b1, s1 + vintL1 + strL1 + vintL3, strL3, b2, s2</span></div><div class="line"><span class="comment">//                    + vintL2 + strL2 + vintL4, strL4);</span></div><div class="line"></div><div class="line">                <span class="comment">// Compare table names</span></div><div class="line">                <span class="keyword">int</span> strL1 = readInt(b1, s1);</div><div class="line">                <span class="keyword">int</span> strL2 = readInt(b2, s2);</div><div class="line">                <span class="keyword">int</span> cmp = compareBytes(b1, s1 + Bytes.SIZEOF_INT, strL1, b2, s2 + Bytes.SIZEOF_INT, strL2);</div><div class="line">                <span class="keyword">if</span> (cmp != <span class="number">0</span>) &#123;</div><div class="line">                    <span class="keyword">return</span> cmp;</div><div class="line">                &#125;</div><div class="line">                <span class="comment">// Compare row keys</span></div><div class="line">                <span class="keyword">int</span> strL3 = readInt(b1, s1 + Bytes.SIZEOF_INT + strL1);</div><div class="line">                <span class="keyword">int</span> strL4 = readInt(b2, s2 + Bytes.SIZEOF_INT + strL2);</div><div class="line">                <span class="keyword">int</span> i = compareBytes(b1, s1 + Bytes.SIZEOF_INT * <span class="number">2</span> + strL1, strL3, b2, s2</div><div class="line">                        + Bytes.SIZEOF_INT * <span class="number">2</span> + strL2, strL4);</div><div class="line">                <span class="keyword">return</span> i;</div><div class="line"></div><div class="line">            &#125; <span class="keyword">catch</span>(Exception ex) &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(ex);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> &#123; </div><div class="line">        WritableComparator.define(CsvTableRowkeyPair.class, <span class="keyword">new</span> Comparator());</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>修改以后，重新使用maven命令打包并替换集群上 ${PHOENIX}/bin下对应的<code>phoenix-&lt;version&gt;-client.jar</code>即可。再次执行mapreduce，没有发生OOM异常，问题解决。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag"># HBase</a>
+          
+            <a href="/tags/Phoenix/" rel="tag"># Phoenix</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/08/phoenix-salted-table/" rel="next" title="Phoenix Salted Table">
+                <i class="fa fa-chevron-left"></i> Phoenix Salted Table
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/08/phoenix-export-csv/" rel="prev" title="Phoenix 导出CSV文件">
+                Phoenix 导出CSV文件 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-软件环境"><span class="nav-number">1.</span> <span class="nav-text">1. 软件环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Phoenix-BulkLoad简介"><span class="nav-number">2.</span> <span class="nav-text">2. Phoenix BulkLoad简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-BulkLoad-OOM"><span class="nav-number">3.</span> <span class="nav-text">3. BulkLoad OOM</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-重现"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 重现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-分析"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-解决方案"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 解决方案</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

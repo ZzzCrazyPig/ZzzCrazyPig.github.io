@@ -89,7 +89,7 @@
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="crazypig's blog">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta property="og:url" content="http://yoursite.com/page/3/index.html">
 <meta property="og:site_name" content="crazypig's blog">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="crazypig's blog">
@@ -120,7 +120,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/page/3/"/>
 
 
 
@@ -257,7 +257,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/05/hello-world/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/18/java-gc-introduction/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="crazypig">
@@ -282,8 +282,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/08/05/hello-world/" itemprop="url">
-                  hello-world
+                <a class="post-title-link" href="/2016/04/18/java-gc-introduction/" itemprop="url">
+                  Java GC 介绍
                 </a>
               
             
@@ -299,128 +299,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-05T13:47:56+08:00">
-                2017-08-05
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/06/06/mysql-gr-sync-or-async/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="crazypig">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="crazypig's blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/06/06/mysql-gr-sync-or-async/" itemprop="url">
-                  MySQL Group Replication 同步 or 异步?
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-06T00:00:00+08:00">
-                2017-06-06
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-18T00:00:00+08:00">
+                2016-04-18
               </time>
             
 
@@ -442,8 +322,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
+                  <a href="/categories/Java-GC/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.GC</span>
                   </a>
                 </span>
 
@@ -478,16 +358,21 @@
 
       
         
-          <blockquote>
-<p>参考国外MySQL大神的博客<a href="http://lefred.be/">lefred.be</a>，理解一下Group Replication是同步还是异步的，原文地址请戳：<a href="http://lefred.be/content/mysql-group-replication-synchronous-or-asynchronous-replication/">MySQL Group Replication… synchronous or asynchronous replication ?</a></p>
-</blockquote>
-<p>经过前面文章的讨论，我们知道，Group Replication利用分布式一致性协议，来保证数据的最终一致性。我们知道，传统的复制，是异步复制的。那么，对于组复制，到底它是异步的还是同步的？</p>
+          <p>众所周知，Java程序不用像C++程序在程序中自行处理内存的回收释放。这是因为Java在JVM虚拟机上增加了垃圾回收(GC)机制，用以在合适的时间触发垃圾回收，将不需要的内存空间回收释放，避免无限制的内存增长导致的OOM。作为一个合格的Java程序员，有必要了解Java GC相关知识。掌握GC知识一方面可以帮助我们快速排查因JVM导致的线上问题，另一方面也可以帮助我们在Java应用发布之前合理地对JVM进行调优，提高应用的执行效率、可靠性和健壮性。</p>
+<p>这篇文章将从以下几点展开介绍：</p>
+<ul>
+<li>Java堆内存结构</li>
+<li>分代回收算法</li>
+<li>垃圾收集器</li>
+<li>GC日志</li>
+<li>JVM参数使用</li>
+</ul>
 <blockquote>
-<p>Group Replication = 组复制</p>
+<p>本文所讨论的虚拟机为默认JDK所使用的HotSpot虚拟机。</p>
 </blockquote>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/06/06/mysql-gr-sync-or-async/#more" rel="contents">
+            <a class="btn" href="/2016/04/18/java-gc-introduction/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -530,7 +415,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/04/22/mysql-gr-node-state-introduction/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/01/kettle5-log4j-plugin-usage/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="crazypig">
@@ -555,8 +440,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/04/22/mysql-gr-node-state-introduction/" itemprop="url">
-                  MySQL Group Replication 节点状态详解
+                <a class="post-title-link" href="/2016/04/01/kettle5-log4j-plugin-usage/" itemprop="url">
+                  Kettle5 log4j插件使用
                 </a>
               
             
@@ -572,8 +457,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-22T00:00:00+08:00">
-                2017-04-22
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-01T00:00:00+08:00">
+                2016-04-01
               </time>
             
 
@@ -595,8 +480,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
+                  <a href="/categories/ETL-kettle/" itemprop="url" rel="index">
+                    <span itemprop="name">ETL.kettle</span>
                   </a>
                 </span>
 
@@ -631,18 +516,931 @@
 
       
         
-          <h2 id="replication-group-members表"><a href="#replication-group-members表" class="headerlink" title="replication_group_members表"></a>replication_group_members表</h2><p>通过查询performance_schema下的replication_group_members表可以知道MGR集群中节点的状态:</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">mysql&gt; desc performance_schema.replication_group_members;</div><div class="line">+--------------+----------+------+-----+---------+-------+</div><div class="line">| Field        | Type     | Null | Key | Default | Extra |</div><div class="line">+--------------+----------+------+-----+---------+-------+</div><div class="line">| CHANNEL_NAME | char(64) | NO   |     | NULL    |       |</div><div class="line">| MEMBER_ID    | char(36) | NO   |     | NULL    |       |</div><div class="line">| MEMBER_HOST  | char(60) | NO   |     | NULL    |       |</div><div class="line">| MEMBER_PORT  | int(11)  | YES  |     | NULL    |       |</div><div class="line">| MEMBER_STATE | char(64) | NO   |     | NULL    |       |</div><div class="line">+--------------+----------+------+-----+---------+-------+</div><div class="line">5 rows in set (0.01 sec)</div></pre></td></tr></table></figure>
+          <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1.前言"></a>1.前言</h2><p>Kettle5.x版本本身没有使用log4j输出日志到文件。但是，有时候根据我们实际的需求，需要将日志保存起来，便于日后分析错误、排除故障。所幸在kettle5中有一个内置插件，叫做<strong>kettle5-log4j-plugin</strong>。本来以为只要将log4j.xml放在kettle安装目录，并在plugins目录下集成这个插件后就可以将kettle中执行的日志统统追加到log4j配置的日志输出位置。但是事实上，kettle官方源码里面并没有在KettleEnvironment中初始化注册logging plugin。所以我们需要做的是，在Kettle环境初始化过程中初始化注册logging plugin。</p>
+<blockquote>
+<p>在Kettle中，所有的组件都是以插件的形式存在。Kettle还将插件分门别类，比如我们这篇文章所讲的是日志插件类型LoggingPluginType。</p>
+</blockquote>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/04/01/kettle5-log4j-plugin-usage/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/01/kettle-diff-classloader-cause-CCE/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/04/01/kettle-diff-classloader-cause-CCE/" itemprop="url">
+                  Kettle Plugin ClassCastException 解决思路
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-01T00:00:00+08:00">
+                2016-04-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ETL-kettle/" itemprop="url" rel="index">
+                    <span itemprop="name">ETL.kettle</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1.前言"></a>1.前言</h2><p>最近在开发一个Kettle步骤插件的时候遇到<strong>CCE(ClassCastException)</strong>异常，在网上Google了很多资料，自己又调试了很久，才摸索出一些解决方法，分享给大家，相信对于经常开发Kettle插件的开发者难免会碰到这种奇葩的问题。</p>
+<p>在开发调试过程中通过使用<code>-DKETTLE_PLUGIN_CLASSES</code>参数指定加载插件进行调试的时候并未报任何异常。然而，当我把插件打包部署到plugins目录下进行调试的时候，奇怪的异常就出现了：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Caused by: java.lang.ClassCastException: class org.apache.cxf.bus.spring.SpringBusFactory</div><div class="line">    at java.lang.Class.asSubclass(Class.java:3208)</div><div class="line">    at org.apache.cxf.BusFactory.newInstance(BusFactory.java:327)</div><div class="line">    ... 31 more</div></pre></td></tr></table></figure>
+<p>当时就懵了，后来查阅了一些资料，调试了相关代码，发现通过指定<code>-DKETTLE_PLUGIN_CLASSES</code>参数调试插件的时候，插件使用的ClassLoader是<code>AppClassLoader</code>,而当插件部署到plugins目录使用的ClassLoader是Kettle自定义的ClassLoader -&gt; <code>KettleURLClassLoader</code>。</p>
+<blockquote>
+<p>KettleURLClassLoader加载class的机制违反了传统的双亲委托机制，默认先从本地加载，加载不到的情况下才委托父级ClassLoader加载。原因是Kettle为了实现不同插件之间依赖库的隔离。</p>
+</blockquote>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/04/01/kettle-diff-classloader-cause-CCE/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/15/jdk7-arrayblockingqueue-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/15/jdk7-arrayblockingqueue-introduction/" itemprop="url">
+                  JDK7 ArrayBlockingQueue源码分析
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-15T00:00:00+08:00">
+                2016-03-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java-JDK源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.JDK源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>阻塞队列提供两个附加的操作，允许阻塞的插入操作和阻塞的移除操作。</p>
 <ul>
-<li><strong>CHANNEL_NAME</strong> : 显示的值永远为group_replication_applier</li>
-<li><strong>MEMBER_ID </strong>: 节点serer_uuid</li>
-<li><strong>MEMBER_PORT</strong> : 节点服务端口，取值为server_port指定的端口</li>
-<li><strong>MEMBER_HOST</strong> : 如果没有配置report_host选项，那么取值为机器的hostname，可以通过report_host配置指定具体的IP</li>
-<li><strong>MEMBER_STATE</strong> : 节点状态，取值下一节讨论</li>
+<li><strong>阻塞的插入操作</strong>：当队列满时，插入操作将一直阻塞，直到队列不满，插入操作才能进行并返回。</li>
+<li><strong>阻塞的移除操作</strong>：当队列空时，移除操作将一直阻塞，直到队列非空，移除操作才能进行并返回。</li>
+</ul>
+<p>阻塞队列常用于生产者和消费者的场景。生产者线程负责往队列添加数据，消费者线程负责从队列中取出数据进行逻辑处理。</p>
+<blockquote>
+<p>JDK的线程池ThreadPoolExecutor内部的工作队列就是用阻塞队列来维护的。</p>
+</blockquote>
+<p>阻塞队列是线程安全的类，适用于在多线程环境下。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/03/15/jdk7-arrayblockingqueue-introduction/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/12/jdk7-concurrenthashmap-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/12/jdk7-concurrenthashmap-introduction/" itemprop="url">
+                  JDK7 ConcurrentHashMap源码分析
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-12T00:00:00+08:00">
+                2016-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java-JDK源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.JDK源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>ConcurrentHashMap是JDK5以后引入的，用于弥补HashMap不可用于多线程环境以及HashTable在多线程并发竞争效率低的缺陷。ConcurrentHashMap不仅是线程安全的HashMap，而且通过引入分段锁概念来提高多线程并发访问的效率。如果你的程序处于多线程环境，而且要用到HashMap的结构来存储数据，那么ConcurrentHashMap将是你的首选。这篇文章主要介绍ConcurrentHashMap的底层实现原理以及一些常用的操作。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/03/12/jdk7-concurrenthashmap-introduction/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/07/jdk7-hashmap-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/07/jdk7-hashmap-introduction/" itemprop="url">
+                  JDK7 HashMap源码分析
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-07T00:00:00+08:00">
+                2016-03-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java-JDK源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.JDK源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>HashMap是Java内置实现了Map接口的一个常用类，通常我们使用这个类来保存键-值对,其中Key和Value可以是任意的Java引用类型(不能使用基本数据类型)。这篇文章基于JDK7来分析HashMap的源码，了解一下HashMap的底层结构。</p>
+<h2 id="1-HashMap底层结构"><a href="#1-HashMap底层结构" class="headerlink" title="1. HashMap底层结构"></a>1. HashMap底层结构</h2><p>HashMap内部维护一个Entry<K, V>类型的数组(变量命名为table)。Entry对象除了存放Key和Value，还引用了另外一个Entry对象(命名为next)，table数组中的每一个元素都是一个Entry链，实际上的HashMap就是一个Entry数组链表。通过计算每一个元素的hash值(根据key来计算得到hash值)，将不同元素散列到不同的数组链上。注意，key值不同的情况下可能求得的hash值是相同的(hash冲突)，hash值相同key值不同的元素位于同一条Entry链。</p>
+<blockquote>
+<p>HashMap中链表元素的添加采用头插法，即最新插入的元素位于链表头部。</p>
+</blockquote>
+<p>下面这张图很好地描述了HashMap的底层结构：</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/03/07/jdk7-hashmap-introduction/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/06/build-site-using-github-pages/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/06/build-site-using-github-pages/" itemprop="url">
+                  使用GitHub Pages搭建技术博客
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-06T00:00:00+08:00">
+                2016-03-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blog/" itemprop="url" rel="index">
+                    <span itemprop="name">blog</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h2 id="1-搭建技术博客"><a href="#1-搭建技术博客" class="headerlink" title="1. 搭建技术博客"></a>1. 搭建技术博客</h2><p>相信很多码农在某一天会有这么一个小冲动——“我要搭建属于自己的技术博客”，然后就会开始Google着——“如何搭建自己的技术博客？”。很惭愧，我也是其中的一员。但是很幸运，发现其实以前用过的GitHub已经为我们提供了搭建个人技术博客的平台——GitHub Pages！使用GitHub Pages来搭建博客有以下好处：</p>
+<ul>
+<li>提供一定免费空间给你搭建个人博客</li>
+<li>托管在GitHub上面安全可靠，节省更多考虑实现技术细节的时间</li>
+<li>基于模板脚本Jekyll来搭建，快速且简单，开源社区提供了很多Jekyll主题供你自行定制个人博客，如Jekyll Bootstrap</li>
+<li>使用Markdown语法来编写博客文章，可以让你专注于写作，而不必去在意太多格式或样式</li>
+</ul>
+<p>基于以上好处，我们可以使用GitHub Pages来搭建自己的技术博客。</p>
+<blockquote>
+<p>如果你还没有听说过Git、GitHub以及Markdown，建议你先了解一下这些东西。因为这篇文章所讲的搭建博客的必须前提是掌握这些工具的基本使用。</p>
+</blockquote>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/03/06/build-site-using-github-pages/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/01/async-webservice-using-cxf/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/01/async-webservice-using-cxf/" itemprop="url">
+                  CXF异步WebService发布和调用
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-01T00:00:00+08:00">
+                2016-03-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java-WebService/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.WebService</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>最近工作需要接触CXF异步webservice的发布和调用，在网上Google并捣鼓了好一阵子，总算成功了。毕竟这方面的资料比较少，自己总结一下写下这篇博文。本文将描述如何利用CXF来发布和调用异步的webservice，通过一个示例，带大家一步一步开发基于CXF的异步webservice及客户端调用程序。</p>
+<p><strong>【参考】</strong></p>
+<ul>
+<li><a href="http://www.javatips.net/blog/2014/03/asynchronous-web-service-using-cxf">asynchronous-web-service-using-cxf</a></li>
+<li><a href="http://www.javatips.net/blog/2014/03/cxf-asynchronous-client">cxf-asynchronous-client</a></li>
+<li><a href="http://cxf.apache.org/docs/overview.html">apache cxf docs</a></li>
 </ul>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/04/22/mysql-gr-node-state-introduction/#more" rel="contents">
+            <a class="btn" href="/2016/03/01/async-webservice-using-cxf/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -685,7 +1483,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/13/mysql-gr-error1236/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/01/20/carte-introduction/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="crazypig">
@@ -710,8 +1508,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/03/13/mysql-gr-error1236/" itemprop="url">
-                  MySQL Group Replication Got fatal error 1236
+                <a class="post-title-link" href="/2016/01/20/carte-introduction/" itemprop="url">
+                  Kettle Carte简介
                 </a>
               
             
@@ -727,8 +1525,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-13T00:00:00+08:00">
-                2017-03-13
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-01-20T00:00:00+08:00">
+                2016-01-20
               </time>
             
 
@@ -750,8 +1548,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
+                  <a href="/categories/ETL-kettle/" itemprop="url" rel="index">
+                    <span itemprop="name">ETL.kettle</span>
                   </a>
                 </span>
 
@@ -786,12 +1584,10 @@
 
       
         
-          <h2 id="问题产生的场景"><a href="#问题产生的场景" class="headerlink" title="问题产生的场景"></a>问题产生的场景</h2><p>原先配置了MGR集群，从节点退出集群(stop group_replication)，隔了很长一段时间想要加进来，这段时间内，主节点进行很多操作，并且之前的binlog被purged掉</p>
-<h2 id="问题产生原因分析"><a href="#问题产生原因分析" class="headerlink" title="问题产生原因分析"></a>问题产生原因分析</h2><p>MGR主节点的binary log被删除掉(purge或者定期删除掉，人为地在硬盘上执行rm删除不在此考虑范围), MGR从节点无法读取到这些binary log, 尝试多次recovery(找donor进行recovery)后失败，从replication group中退出，从节点的报错信息大致如下所示:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2017-03-13T10:00:26.358681+08:00 355 [ERROR] Error reading packet from server for channel &apos;group_replication_recovery&apos;: The slave is connecting using CHANGE MASTER TO MASTER_AUTO_POSITION = 1, but the master has purged binary logs containing GTIDs that the slave requires. (server_errno=1236)</div><div class="line">2017-03-13T10:00:26.358720+08:00 355 [ERROR] Slave I/O for channel &apos;group_replication_recovery&apos;: Got fatal error 1236 from master when reading data from binary log: &apos;The slave is connecting using CHANGE MASTER TO MASTER_AUTO_POSITION = 1, but the master has purged binary logs containing GTIDs that the slave requires.&apos;, Error_code: 1236</div><div class="line">...</div></pre></td></tr></table></figure>
+          <h2 id="1-Carte简介"><a href="#1-Carte简介" class="headerlink" title="1. Carte简介"></a>1. Carte简介</h2><p>Carte是Kettle内置的一个小型web服务端程序，使用Jetty作为web容器，提供http服务让客户端机器调用(Servlet方式实现)，它可以被用来远程执行转换、作业以及组成Kettle集群。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/03/13/mysql-gr-error1236/#more" rel="contents">
+            <a class="btn" href="/2016/01/20/carte-introduction/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -834,7 +1630,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/05/mysql-gr-dynamic-add-member/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/01/05/kettle5.x-step-plugin-dev-summary/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="crazypig">
@@ -859,8 +1655,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/01/05/mysql-gr-dynamic-add-member/" itemprop="url">
-                  MySQL Group Replication动态添加成员
+                <a class="post-title-link" href="/2016/01/05/kettle5.x-step-plugin-dev-summary/" itemprop="url">
+                  Kettle5.x步骤组件开发总结
                 </a>
               
             
@@ -876,8 +1672,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-05T00:00:00+08:00">
-                2017-01-05
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-01-05T00:00:00+08:00">
+                2016-01-05
               </time>
             
 
@@ -899,8 +1695,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
+                  <a href="/categories/ETL-kettle/" itemprop="url" rel="index">
+                    <span itemprop="name">ETL.kettle</span>
                   </a>
                 </span>
 
@@ -935,770 +1731,10 @@
 
       
         
-          <h1 id="1-背景"><a href="#1-背景" class="headerlink" title="1. 背景"></a>1. 背景</h1><p>前面文章已经介绍如何部署MySQL GR 的两种模式:</p>
-<ul>
-<li><a href="http://blog.csdn.net/d6619309/article/details/53691790">MySQL Group Replication 搭建 (Multi-Primary Mode)</a></li>
-<li><a href="http://blog.csdn.net/d6619309/article/details/53786995">MySQL Group Replication 搭建 (Single-Primary Mode)</a></li>
-</ul>
-<p>在前面的部署里面，因为是预先知道需要部署的组节点规模，所以我们能够在my.cnf里面体现出组成员信息。但是，前面的部署并没有体现出动态添加组节点。</p>
-<p>这篇文章介绍如何动态地往一个组里面添加新的成员。</p>
-<p><strong>前提</strong>: MySQL GR 3节点（s1、s2、s3）部署成功，模式定为Multi-Primary Mode，Single-Primary Mode也是一样的处理。</p>
-<p><strong>目标</strong>: 不重启已有GR节点的基础上，添加新成员s4、s5，组成5节点的GR。</p>
+          <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>Kettle允许我们自定义开发插件以支持实际项目中特殊的流程，关于Kettle插件体系的介绍可以参考链接：<a href="http://www.tuicool.com/articles/2YVZFv">Kettle插件体系介绍</a>。这篇文章主要是针对Step插件的开发总结，不涉及开发其他类型插件的介绍。注意Kettle版本为5.x和4.x的插件结构稍有不同，本文针对的Kettle版本为5.x版本。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/01/05/mysql-gr-dynamic-add-member/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/21/mysql-gr-deploy-in-single-primary-mode/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="crazypig">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="crazypig's blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/21/mysql-gr-deploy-in-single-primary-mode/" itemprop="url">
-                  MySQL Group Replication搭建[Single-Primary Mode]
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-21T00:00:00+08:00">
-                2016-12-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>这篇文章记录如何部署mysql group replication 单写模式 (single-primary mode)</p>
-<blockquote>
-<p>部署方式大致与多写模式的部署一致，所需要修改的只有my.cnf里面关于group replication的配置。</p>
-</blockquote>
-<p>多写模式的部署参考另外一篇文章:</p>
-<p><a href="http://blog.csdn.net/d6619309/article/details/53691790">http://blog.csdn.net/d6619309/article/details/53691790</a></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/12/21/mysql-gr-deploy-in-single-primary-mode/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="crazypig">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="crazypig's blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/" itemprop="url">
-                  MySQL Group Replication 搭建[Multi-Primary Mode]
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-21T00:00:00+08:00">
-                2016-12-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>这篇文章记录如何部署mysql group replication 多写模式 (multi-primary mode)</p>
-<p>single-primary mode的部署参考另外一篇文章: </p>
-<p><a href="http://blog.csdn.net/d6619309/article/details/53786995">http://blog.csdn.net/d6619309/article/details/53786995</a></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/20/mysql-gr-tech/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="crazypig">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="crazypig's blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/20/mysql-gr-tech/" itemprop="url">
-                  MySQL Group Replication技术点
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-20T00:00:00+08:00">
-                2016-12-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>mysql group replication，组复制，提供了多写(multi-master update)的特性，增强了原有的mysql的高可用架构。mysql group replication基于mysql插件架构实现，本身就是一个mysql插件。</p>
-<p>提供的特性:</p>
-<ul>
-<li>多写，写冲突检测</li>
-<li>良好的扩展能力，可动态增删节点，组成员自动管理</li>
-<li>组内高可用</li>
-<li>确保组内数据最终一致性<strong>【重要】</strong>(通过分布式协议和分布式recovery机制保证)</li>
-</ul>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/12/20/mysql-gr-tech/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/16/mysql-gr-introduction/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="crazypig">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="crazypig's blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/16/mysql-gr-introduction/" itemprop="url">
-                  MySQL Group Replication介绍
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-16T00:00:00+08:00">
-                2016-12-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
-                    <span itemprop="name">MySQL.GR</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>2016-12-12，一个重要的日子，mysql5.7.17 GA版发布，正式推出Group Replication(组复制) 插件，通过这个插件增强了mysql原有的高可用方案(原有的Replication方案)，提供了重要的特性——多写，保证组内高可用，确保数据<strong>最终一致性</strong>。</p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/12/16/mysql-gr-introduction/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/06/mycat-sqlparse-model-introduction/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="crazypig">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="crazypig's blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/06/mycat-sqlparse-model-introduction/" itemprop="url">
-                  Mycat sql解析模块分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-06T00:00:00+08:00">
-                2016-10-06
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Mycat-源码/" itemprop="url" rel="index">
-                    <span itemprop="name">Mycat.源码</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><strong>mycat sql解析模块是mycat实现sql路由模块和sql结果集后处理模块的基础，在mycat的几大模块里面占据相当重要的位置</strong>。这篇文章首先简单介绍mycat里面sql解析模块的作用，后面结合部分源码来看这个模块的功能。</p>
-<blockquote>
-<p>本文分析的mycat版本为1.6。假如你使用的是1.4或者1.5，也没关系，因为sql解析功能在1.4和更高版本在大方向上是没怎么变化的。在这里，我们只分析mycat服务(server)端口的sql解析。对于mycat管理(manager)端口的sql解析，不在本文讨论范围内。</p>
-</blockquote>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/10/06/mycat-sqlparse-model-introduction/#more" rel="contents">
+            <a class="btn" href="/2016/01/05/kettle5.x-step-plugin-dev-summary/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1736,7 +1772,7 @@
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 

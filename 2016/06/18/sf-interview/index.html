@@ -1,0 +1,767 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="interview," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="最近一段时间考虑换个工作，一方面基于以后的发展考虑，另外一方面也是因为目前公司研发发展以及做的东西并不是很吸引人了。通过猎头的推荐，发现深圳顺丰科技有个MyCat中间件研发工程师的职位挺适合我的，于是乎让她推荐了下简历，约了面试。本次面试分为电话面试和现场面试。电话面试主要考察技术，现场面试又分为群面、HR面试和总监面试。这篇文章主要记录面试被问到的一些问题，方便以后补充自己空缺的技术点，也希望这">
+<meta property="og:type" content="article">
+<meta property="og:title" content="顺丰科技数据库中间件研发工程师面试经历">
+<meta property="og:url" content="http://yoursite.com/2016/06/18/sf-interview/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="最近一段时间考虑换个工作，一方面基于以后的发展考虑，另外一方面也是因为目前公司研发发展以及做的东西并不是很吸引人了。通过猎头的推荐，发现深圳顺丰科技有个MyCat中间件研发工程师的职位挺适合我的，于是乎让她推荐了下简历，约了面试。本次面试分为电话面试和现场面试。电话面试主要考察技术，现场面试又分为群面、HR面试和总监面试。这篇文章主要记录面试被问到的一些问题，方便以后补充自己空缺的技术点，也希望这">
+<meta property="og:updated_time" content="2017-08-05T06:13:04.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="顺丰科技数据库中间件研发工程师面试经历">
+<meta name="twitter:description" content="最近一段时间考虑换个工作，一方面基于以后的发展考虑，另外一方面也是因为目前公司研发发展以及做的东西并不是很吸引人了。通过猎头的推荐，发现深圳顺丰科技有个MyCat中间件研发工程师的职位挺适合我的，于是乎让她推荐了下简历，约了面试。本次面试分为电话面试和现场面试。电话面试主要考察技术，现场面试又分为群面、HR面试和总监面试。这篇文章主要记录面试被问到的一些问题，方便以后补充自己空缺的技术点，也希望这">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/06/18/sf-interview/"/>
+
+
+
+
+
+  <title> 顺丰科技数据库中间件研发工程师面试经历 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/18/sf-interview/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                顺丰科技数据库中间件研发工程师面试经历
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-06-18T00:00:00+08:00">
+                2016-06-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/interview/" itemprop="url" rel="index">
+                    <span itemprop="name">interview</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近一段时间考虑换个工作，一方面基于以后的发展考虑，另外一方面也是因为目前公司研发发展以及做的东西并不是很吸引人了。通过猎头的推荐，发现深圳顺丰科技有个<strong>MyCat中间件研发工程师</strong>的职位挺适合我的，于是乎让她推荐了下简历，约了面试。本次面试分为电话面试和现场面试。电话面试主要考察技术，现场面试又分为群面、HR面试和总监面试。这篇文章主要记录面试被问到的一些问题，方便以后补充自己空缺的技术点，也希望这段面经能够帮到大家。</p>
+<a id="more"></a>
+<h1 id="2016-06-17-电话面试"><a href="#2016-06-17-电话面试" class="headerlink" title="2016-06-17 电话面试"></a>2016-06-17 电话面试</h1><p>约了电话面试。虽然不是面对面的面试，但是还是挺让人紧张的，尤其是面试官不断深入地去探索你的技术掌握深度，会让你觉得奔溃。这里记录一下这次电话面试中流程以及被问到的一些问题：</p>
+<p>首先面试官会让你做一个简单的介绍，我也没什么组织，没头没脑地介绍了自己的名字，学历，工作内容，由于对方招的是MyCat开发，所以在讲述相应的项目经历里面特别渲染了一下，介绍了自己对MyCat做了哪些工作。</p>
+<p>接下来，就正式进入提问环节了：</p>
+<p><strong>1) 你读过MySQL源代码么?</strong></p>
+<p>当时就傻眼了，我是搞Java的，MySQL源码可是C++代码。如实回答“没有”。</p>
+<p><strong>2) 了解过MySQL的sql解析和路由解析么?</strong></p>
+<p>当场跪下了。也许是我在描述MyCat开发的项目经历表述不清楚，赶紧跟面试官解释：虽然我实现了MyCat的sql预处理功能需要了解MySQL协议包格式以及sql解析处理，但是跟MySQL源码确实没有关系，自己也没了解过MySQL的sql解析和路由解析。</p>
+<p>接下来面试官就换话题了：“你从什么时候开始学的Java，从大学开始就学了吧?”， 我回答说“从大三开始就接触”，然后他就问了，“你主要擅长Java核心的哪一块?”。想了想，好像我也没有擅长哪一块呀！没办法，我就回答：“多线程吧”。紧接着是一堆多线程并发问题（估计他也是希望我回答这个- -。然后就可以虐死我了。）：</p>
+<p><strong>3) Java实现同步的方式有哪些?</strong></p>
+<p>synchronized和Lock。</p>
+<p><strong>4) synchronized与Lock的区别是什么?</strong></p>
+<p>Lock有超时lock的机制，也支持中断，而synchronized没有，相比于synchronized，使用Lock具有更高的灵活性。</p>
+<p><strong>5) Lock的实现你知道哪些?</strong></p>
+<p>可重入锁（ReentrantLock，表示这个单词英文不会读- -。）</p>
+<p><strong>6) ReentrantLock的底层机制?</strong></p>
+<p>这个其实我也不知道该怎么回答，就回答了：基于CAS来实现，有公平锁和非公平锁，默认情况下创建的是非公平锁。</p>
+<p><strong>7) ReentrantLock的公平性与非公平性是怎么实现的?</strong></p>
+<p>当时真的不知道怎么回答，就直接跟面试官说不知道，但是他还是问了我，“如果要你来实现，你会怎么实现公平性和非公平性? ”当时我就回答说：“应该是用一个队列来维护那些获取锁的线程，公平性的实现就是队列里面的元素先进的先出，有机会获取锁吧。非公平性可能是每个线程有个优先级，然后采用优先队列来实现吧。”</p>
+<p>面试结束后看了<code>ReentrantLock</code>的源码发现，其实公平性和非公平性的差别体现在于对<code>Sync</code>类<code>lock</code>方法以及<code>tryAcquire</code>的实现上：</p>
+<p>非公平锁对应使用<code>NonfairSync</code>，它的<code>lock</code>方法如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Performs lock.  Try immediate barge, backing up to normal</div><div class="line"> * acquire on failure.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))</div><div class="line">				setExclusiveOwnerThread(Thread.currentThread());</div><div class="line">		<span class="keyword">else</span></div><div class="line">				acquire(<span class="number">1</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>非公平性首先体现在：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))</div><div class="line">	setExclusiveOwnerThread(Thread.currentThread());</div></pre></td></tr></table></figure>
+<p>对于每一个调用lock方法的线程，均有可能先获取到锁，即使这个时候等待队列里面有其他正在等待锁的线程。这里体现了一个“插队”的概念，所以是非公平的(对于那些正在排队的等待线程来说)。</p>
+<p>接下来，<code>acquire</code>会调用<code>tryAcquire</code>，<code>tryAcquire</code>最终调用<code>nonfairTryAcquire</code>：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Performs non-fair tryLock.  tryAcquire is implemented in</div><div class="line"> * subclasses, but both need nonfair try for trylock method.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">nonfairTryAcquire</span><span class="params">(<span class="keyword">int</span> acquires)</span> </span>&#123;</div><div class="line">		<span class="keyword">final</span> Thread current = Thread.currentThread();</div><div class="line">		<span class="keyword">int</span> c = getState();</div><div class="line">		<span class="keyword">if</span> (c == <span class="number">0</span>) &#123;</div><div class="line">				<span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, acquires)) &#123;</div><div class="line">						setExclusiveOwnerThread(current);</div><div class="line">						<span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">				&#125;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (current == getExclusiveOwnerThread()) &#123;</div><div class="line">				<span class="keyword">int</span> nextc = c + acquires;</div><div class="line">				<span class="keyword">if</span> (nextc &lt; <span class="number">0</span>) <span class="comment">// overflow</span></div><div class="line">						<span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">"Maximum lock count exceeded"</span>);</div><div class="line">				setState(nextc);</div><div class="line">				<span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里在<code>c==0</code>的条件分支里面也有非公平的实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">if (c == 0) &#123;</div><div class="line">		if (compareAndSetState(0, acquires)) &#123;</div><div class="line">				setExclusiveOwnerThread(current);</div><div class="line">				return true;</div><div class="line">		&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>ReentrantLock内部确实会使用一个队列来保存那些等待获取锁的线程</p>
+</blockquote>
+<p><strong>8) 死锁是怎么产生的?</strong></p>
+<p>不是很懂，举了个会产生死锁的例子给面试官听，描述得也不是很清楚。</p>
+<p><strong>9) 如何避免死锁?</strong></p>
+<p>我回答说避免使用锁，还有尽量减少在占用一个共享资源的前提下再去占用另外一个共享资源。但是面试官好像还期待回答更多。</p>
+<p><strong>10) 对concurrent包下面的容器类知道的有哪些?</strong></p>
+<p>回答了ArrayBlockingQueue和LinkedBlockingQueue（漏了ConcurrentHashMap - -。）</p>
+<p><strong>11) 知道ConcurrentHashMap么?</strong></p>
+<p>赶紧回答知道。</p>
+<p><strong>12) ConcurrentHashMap的底层机制是怎么样的?</strong></p>
+<p>就我所知道的，ConcurrentHashMap分为多个Segment，一个Segment相当于一个ReentrantLock，即所谓的分段锁。放到ConcurrentHashMap的元素首先会被定位到某个Segment，一个Segment在底层实现相当于一个HashMap，也就是说ConcurrentHashMap内部维护了多个HashMap，并且具有线程安全性和并发访问性。</p>
+<p><strong>12) ConcurrentHashMap默认创建会初始化几个Segment?</strong></p>
+<p>16个</p>
+<p><strong>13) 并发编程除了用锁来解决共享变量的访问，还有其他方式么?</strong></p>
+<p>不懂，面试官最后介绍了一个基于消息通信的模型框架（actor模型），好像是叫Akka，没了解过。</p>
+<p>多线程并发的问题到这里又告一段落了，接下来问的是网络编程方面的东西：</p>
+<p><strong>13) 对Java网络编程了解多少?</strong></p>
+<p>也没了解很多，主要是在接触MyCat的时候了解了一点NIO的知识。</p>
+<p><strong>14) 那谈谈你对NIO的了解?</strong></p>
+<p>主要是在并发编程网上面看了相关的概念，NIO有3大概念：Channel、Buffer和Selector。NIO是多路复用IO，虽然说是非阻塞IO，但是还是会阻塞在Selector上面，Selector监听所有感兴趣的事件，比如新连接到来的事件、读事件以及写事件，通常我们将这些事件分发给工作线程去处理。</p>
+<p>接下来他问了最后一个Java问题：</p>
+<p><strong>15) 对Java内存了解多少？堆内内存和堆外内存?</strong></p>
+<p>我回答了对堆内存还稍微了解了一点，就是Java堆的分代以及GC算法。堆外内存没有了解过（应该是想问一些DirectHeap的东西，在网络编程里面涉及比较多）</p>
+<p>最后还问了一个问题，因为他看我有用过HBase的经验，所以问了在项目使用HBase的过程中遇到什么问题?这里随便回答了一些，还好他没深入去问。</p>
+<p>最后隐约是听到说另外找个时间面谈！</p>
+<p>在结束前我问了两个比较感兴趣的问题：</p>
+<p><strong>1) 招这个职位主要负责哪些工作?</strong></p>
+<p><strong>2) 做这方面开发的团队有多少成员?</strong></p>
+<p>据描述顺丰科技内部有核心系统在用MyCat，所以他们希望能够改进、优化它的一些性能，将MyCat打造成为真正的企业版数据库中间件。最后他们也希望实现的功能和改进优化能够积极反馈给社区，提高顺丰在社区里的影响力。</p>
+<h1 id="2016-06-21-现场面试"><a href="#2016-06-21-现场面试" class="headerlink" title="2016-06-21 现场面试"></a>2016-06-21 现场面试</h1><p>电话面试通过后的下一周就接到电话通知去深圳顺丰科技进行面谈，面谈分为：技术面试、HR面试以及最后的总监面试。</p>
+<h2 id="技术面试"><a href="#技术面试" class="headerlink" title="技术面试"></a>技术面试</h2><p>1对3的技术面试，有3个面试官，其中一个是跟我进行过电话面试的大神。后来了解到3个面试官里面有一个是主管，两个是在做MyCat开发的，电话面试的那位大神就是其中一位。技术面试一开始还是进行了简单的自我介绍，然后就深入谈了我在公司里面MyCat开发的项目经验，问的内容大部分围绕项目，比如说，你们MyCat使用的版本，对MyCat做了哪些改造，你们的架构是怎么样的。这次技术面试，他们的重点在于考察我简历上面那些项目是承当一个什么角色，对那些项目的熟悉程度以及是否了解它们的架构（根据他们的理解，我是属于做基础架构方面的- -。），最后也要求你在白纸上画了一下其中某个项目的整体架构。当然，重点还是围绕MyCat那段项目经历来展开，问了很多相关的东西。</p>
+<h2 id="HR面试"><a href="#HR面试" class="headerlink" title="HR面试"></a>HR面试</h2><p>好像还是第一次正规地接触了HR面试。这次HR面试主要从我目前的从业情况以及未来的就业发展来展开，问了很多公司的情况，包括公司做什么的，公司研发的一个组织架构，待遇福利，加班情况，在部门中的角色等等，然后也会问为什么考虑离职（才干了一年），未来的职业规划什么的。然后重点就来了，她会问你期望拿多少月薪啦，最低多少可以接受啦。最后我问了一些问题，包括这个职位的要求，在研发团队中属于哪个组，顺丰科技的福利待遇以及工作情况，就这么结束了HR面试。</p>
+<p>然后又被告知要进行最后一轮的总监面试（真是累觉不爱- -。）</p>
+<h2 id="总监面试"><a href="#总监面试" class="headerlink" title="总监面试"></a>总监面试</h2><p>总监面试主要围绕项目经验以及职位规划来问，他还问了“大学有没有偏科、挂科”，“英语达到什么水平”这种雷人的问题，估计准备把我当应届生处理吧- -。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/interview/" rel="tag"># interview</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/08/phoenix-export-csv/" rel="next" title="Phoenix 导出CSV文件">
+                <i class="fa fa-chevron-left"></i> Phoenix 导出CSV文件
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/07/25/mycat-debug-env-build/" rel="prev" title="Mycat源码调试环境搭建">
+                Mycat源码调试环境搭建 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#2016-06-17-电话面试"><span class="nav-number">1.</span> <span class="nav-text">2016-06-17 电话面试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2016-06-21-现场面试"><span class="nav-number">2.</span> <span class="nav-text">2016-06-21 现场面试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#技术面试"><span class="nav-number">2.1.</span> <span class="nav-text">技术面试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HR面试"><span class="nav-number">2.2.</span> <span class="nav-text">HR面试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总监面试"><span class="nav-number">2.3.</span> <span class="nav-text">总监面试</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

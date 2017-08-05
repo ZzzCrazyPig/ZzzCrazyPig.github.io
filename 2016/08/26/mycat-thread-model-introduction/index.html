@@ -1,0 +1,750 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Mycat," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="参考MyCat权威指南，对MyCat-Server里面的线程模型做简要分析:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mycat线程模型分析">
+<meta property="og:url" content="http://yoursite.com/2016/08/26/mycat-thread-model-introduction/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="参考MyCat权威指南，对MyCat-Server里面的线程模型做简要分析:">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/mycat-thread-model.jpg?imageView2/2/w/768">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/hig-perf-reactor-model.png">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/show-jps.png">
+<meta property="og:updated_time" content="2017-08-05T06:53:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mycat线程模型分析">
+<meta name="twitter:description" content="参考MyCat权威指南，对MyCat-Server里面的线程模型做简要分析:">
+<meta name="twitter:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/mycat-thread-model.jpg?imageView2/2/w/768">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/08/26/mycat-thread-model-introduction/"/>
+
+
+
+
+
+  <title> Mycat线程模型分析 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/08/26/mycat-thread-model-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Mycat线程模型分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-08-26T00:00:00+08:00">
+                2016-08-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mycat-源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Mycat.源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>参考MyCat权威指南，对MyCat-Server里面的线程模型做简要分析:</p>
+<a id="more"></a>
+<h1 id="1-线程模型图"><a href="#1-线程模型图" class="headerlink" title="1. 线程模型图"></a>1. 线程模型图</h1><p>根据MyCat权威指南，做出以下线程模型图:</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/mycat-thread-model.jpg?imageView2/2/w/768" alt="mycat-thread-model"></p>
+<p>MyCat的线程模型主要分为三部分（: 网络通讯线程、业务线程和定时任务线程，下面分别介绍这些线程的使用:<br><strong>【温馨提示】</strong><br>这里排除JVM自身使用的线程，只关注MyCat服务所使用的线程，如果需要详细了解MyCat里面使用的所有线程，请参考《MyCat权威指南》-&gt; 开发篇 -&gt; MyCat线程模型分析</p>
+<h1 id="2-网络通讯线程"><a href="#2-网络通讯线程" class="headerlink" title="2. 网络通讯线程"></a>2. 网络通讯线程</h1><p>MyCat-Server使用了原生Java NIO和AIO来构建其最重要的网络通讯层，在MyCat-Server启动之前可以通过配置文件来选择使用NIO网络模型或者AIO网络模型。MyCat官方推荐使用NIO模型。所以，这里仅针对NIO网络通讯模型来分析，网络通讯层线程的使用体现在NIOAcceptor、NIOConnector和NIOReactor。</p>
+<h2 id="2-1-NIOAcceptor"><a href="#2-1-NIOAcceptor" class="headerlink" title="2.1 NIOAcceptor"></a>2.1 NIOAcceptor</h2><p>NIOAcceptor线程负责处理客户端连接MyCat的事件（在NIO网络编程中，对应于NIO服务端），包括默认的8066服务端口（Server）和9066管理端口（Manager）。</p>
+<p>NIOAcceptor继承Thread类，在run方法里面处理客户端连接MyCat的连接请求，代码如下所示 :</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">final</span> Selector tSelector = <span class="keyword">this</span>.selector;</div><div class="line">		<span class="keyword">for</span> (;;) &#123;</div><div class="line">			++acceptCount;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">			    tSelector.select(<span class="number">1000L</span>);</div><div class="line">				Set&lt;SelectionKey&gt; keys = tSelector.selectedKeys();</div><div class="line">				<span class="keyword">try</span> &#123;</div><div class="line">					<span class="keyword">for</span> (SelectionKey key : keys) &#123;</div><div class="line">						<span class="keyword">if</span> (key.isValid() &amp;&amp; key.isAcceptable()) &#123;</div><div class="line">							accept();</div><div class="line">						&#125; <span class="keyword">else</span> &#123;</div><div class="line">							key.cancel();</div><div class="line">						&#125;</div><div class="line">					&#125;</div><div class="line">				&#125; <span class="keyword">finally</span> &#123;</div><div class="line">					keys.clear();</div><div class="line">				&#125;</div><div class="line">			&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">				LOGGER.warn(getName(), e);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>对于来自客户端的连接，将被Selector事件选择器捕获，对于成功的连接，将调用accept方法做进一步处理，下面是accept方法的代码 :</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">accept</span><span class="params">()</span> </span>&#123;</div><div class="line">		SocketChannel channel = <span class="keyword">null</span>;</div><div class="line">		<span class="keyword">try</span> &#123;</div><div class="line">			channel = serverChannel.accept();</div><div class="line">			channel.configureBlocking(<span class="keyword">false</span>);</div><div class="line">			FrontendConnection c = factory.make(channel);</div><div class="line">			c.setAccepted(<span class="keyword">true</span>);</div><div class="line">			c.setId(ID_GENERATOR.getId());</div><div class="line">			NIOProcessor processor = (NIOProcessor) MycatServer.getInstance()</div><div class="line">					.nextProcessor();</div><div class="line">			c.setProcessor(processor);</div><div class="line">			</div><div class="line">			NIOReactor reactor = reactorPool.getNextReactor();</div><div class="line">			reactor.postRegister(c);</div><div class="line"></div><div class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">	        LOGGER.warn(getName(), e);</div><div class="line">			closeChannel(channel);</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>accept方法将客户端连接封装成FrontendConnection对象，分配相关资源，然后将客户端连接注册到NIOReactor上。</p>
+<p><strong>【温馨提示】</strong><br>这里注意到，NIOProcessor（持有处理业务逻辑的线程池）和NIOReactor（负责处理NIO网络通讯的读写事件）都进行了池化，目的是让对象得以共享这些稀缺的资源。</p>
+<h2 id="2-2-NIOConnector"><a href="#2-2-NIOConnector" class="headerlink" title="2.2 NIOConnector"></a>2.2 NIOConnector</h2><p>NIOConnector线程负责处理MyCat连接后端MySQL实例的事件（在NIO网络编程中，对应于NIO Client）。与NIOAcceptor类似，该类继承Thread类，在run方法里面处理连接事件，代码如下所示 :</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">final</span> Selector tSelector = <span class="keyword">this</span>.selector;</div><div class="line">		<span class="keyword">for</span> (;;) &#123;</div><div class="line">			++connectCount;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				<span class="comment">//查看有无连接就绪</span></div><div class="line">			    tSelector.select(<span class="number">1000L</span>);</div><div class="line">				connect(tSelector);</div><div class="line">				Set&lt;SelectionKey&gt; keys = tSelector.selectedKeys();</div><div class="line">				<span class="keyword">try</span> &#123;</div><div class="line">					<span class="keyword">for</span> (SelectionKey key : keys) &#123;</div><div class="line">						Object att = key.attachment();</div><div class="line">						<span class="keyword">if</span> (att != <span class="keyword">null</span> &amp;&amp; key.isValid() &amp;&amp; key.isConnectable()) &#123;</div><div class="line">							finishConnect(key, att);</div><div class="line">						&#125; <span class="keyword">else</span> &#123;</div><div class="line">							key.cancel();</div><div class="line">						&#125;</div><div class="line">					&#125;</div><div class="line">				&#125; <span class="keyword">finally</span> &#123;</div><div class="line">					keys.clear();</div><div class="line">				&#125;</div><div class="line">			&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">				LOGGER.warn(name, e);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>在connect方法里面会判断连接队列（元素入队列体现在postConnect方法方法里）是否有连接需要进行处理，如果队列有值，那么取得连接对象主动去跟后端的MySQL实例建立连接。代码如下所示 :</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">connect</span><span class="params">(Selector selector)</span> </span>&#123;</div><div class="line">		AbstractConnection c = <span class="keyword">null</span>;</div><div class="line">		<span class="keyword">while</span> ((c = connectQueue.poll()) != <span class="keyword">null</span>) &#123;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				SocketChannel channel = (SocketChannel) c.getChannel();</div><div class="line">				<span class="comment">//注册OP_CONNECT监听与后端连接是否真正建立</span></div><div class="line">				channel.register(selector, SelectionKey.OP_CONNECT, c);</div><div class="line">                <span class="comment">//主动连接</span></div><div class="line">				channel.connect(<span class="keyword">new</span> InetSocketAddress(c.host, c.port));</div><div class="line">			&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">				c.close(e.toString());</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>连接建立成功后调用finishConnect方法注册对应的读写事件，然后与NIOAcceptor一样，将读写事件的处理交由NIOReactor处理。代码如下所示 :</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">finishConnect</span><span class="params">(SelectionKey key, Object att)</span> </span>&#123;</div><div class="line">		BackendAIOConnection c = (BackendAIOConnection) att;</div><div class="line">		<span class="keyword">try</span> &#123;</div><div class="line">			<span class="keyword">if</span> (finishConnect(c, (SocketChannel) c.channel)) &#123; <span class="comment">//做原生NIO连接是否完成的判断和操作</span></div><div class="line">				clearSelectionKey(key);</div><div class="line">				c.setId(ID_GENERATOR.getId());</div><div class="line">                <span class="comment">//绑定特定的NIOProcessor以作idle清理</span></div><div class="line">				NIOProcessor processor = MycatServer.getInstance()</div><div class="line">						.nextProcessor();</div><div class="line">				c.setProcessor(processor);</div><div class="line">                <span class="comment">//与特定NIOReactor绑定监听读写</span></div><div class="line">				NIOReactor reactor = reactorPool.getNextReactor();</div><div class="line">				reactor.postRegister(c);</div><div class="line">			&#125;</div><div class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">			<span class="comment">//如有异常，将key清空</span></div><div class="line">            clearSelectionKey(key);</div><div class="line">            c.close(e.toString());</div><div class="line">			c.onConnectFailed(e);</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-3-NIOReactor"><a href="#2-3-NIOReactor" class="headerlink" title="2.3 NIOReactor"></a>2.3 NIOReactor</h2><p>一般的NIO网络编程示例，在Server accept客户端连接之后，会直接在该线程里注册读写事件，最后再分发给逻辑处理线程池去处理逻辑，示例代码如下所示 :</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> (;;) &#123;</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">		tSelector.select();</div><div class="line">		Set&lt;SelectionKey&gt; keys = tSelector.selectedKeys();</div><div class="line">		<span class="keyword">try</span> &#123;</div><div class="line">			<span class="keyword">for</span> (SelectionKey key : keys) &#123;</div><div class="line">				<span class="keyword">if</span> (key.isValid() &amp;&amp; key.isAcceptable()) &#123;</div><div class="line">					accept(); <span class="comment">// accept register OP_READ and OP_WRITE</span></div><div class="line">				&#125; <span class="keyword">else</span> <span class="keyword">if</span>(key.isReadable) &#123;</div><div class="line">					read(); <span class="comment">// read data and do business using thread pool</span></div><div class="line">				&#125; <span class="keyword">else</span> <span class="keyword">if</span>(key.isWritable) &#123;</div><div class="line">					write(); <span class="comment">// write data using thread pool</span></div><div class="line">				&#125;</div><div class="line">			&#125;</div><div class="line">		&#125; <span class="keyword">finally</span> &#123;</div><div class="line">			keys.clear();</div><div class="line">		&#125;</div><div class="line">	&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">		<span class="comment">// </span></div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在高性能IO框架实现中，大多采用Reactor模型，将处理连接和处理读写事件分离，模型图如下所示 :</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/hig-perf-reactor-model.png" alt="high-perf-reactor-model"></p>
+<p>MyCat中采用了reactor模式，将读写事件的注册和接收分离到另外的线程去处理。这个另外的线程指的就是NIOReactor，并且，为了优化并发下频繁进行读写，NIOReactor进行了池化（NIOReactorPool）。</p>
+<h1 id="3-业务线程"><a href="#3-业务线程" class="headerlink" title="3. 业务线程"></a>3. 业务线程</h1><p>BusinessExecutor采用Java线程池来实现，线程池大小默认计算方式如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">this</span>.processorExecutor = (DEFAULT_PROCESSORS != <span class="number">1</span>) ? DEFAULT_PROCESSORS * <span class="number">2</span> : <span class="number">4</span>;</div></pre></td></tr></table></figure>
+<p>其中DEFAULT_PROCESSORS为系统CPU可用核心数。单核心的线程池大小为4，非单核心线程池大小为系统CPU可用核心数的2倍。</p>
+<p>线程池的任务队列使用LinkedTransferQueue。</p>
+<p>业务线程主要用在以下方面：</p>
+<ul>
+<li>负责对读取到的网络字节数据做进一步处理</li>
+<li>创建后台mysql连接</li>
+<li>多分片节点结果集包返回汇聚后处理</li>
+</ul>
+<h1 id="4-定时任务线程"><a href="#4-定时任务线程" class="headerlink" title="4. 定时任务线程"></a>4. 定时任务线程</h1><p>TimerExecutor 定时任务线程池，默认线程大小为2。TimerExecutor结合Timer类进行定时任务调度，主要功能为：</p>
+<ul>
+<li>定时检查前端连接和后端空闲连接，回收不可用的连接。</li>
+<li>定期发送心跳包以及心跳检测</li>
+</ul>
+<p><strong>【温馨提示】</strong> 定时逻辑代码入口在MyCatServer.java类里面</p>
+<h1 id="5-jstack-dump线程"><a href="#5-jstack-dump线程" class="headerlink" title="5. jstack dump线程"></a>5. jstack dump线程</h1><p>我们可以使用jdk自带工具jstack来查看MyCat-Server线程的使用情况:</p>
+<p>首先使用jps查看MyCat-Server的进程号:</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-thread-model-unstanding/show-jps.png" alt="show-jps"></p>
+<p>然后使用jstack [mycat-server-pid]打印出线程使用情况:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div><div class="line">205</div><div class="line">206</div><div class="line">207</div><div class="line">208</div><div class="line">209</div><div class="line">210</div><div class="line">211</div><div class="line">212</div><div class="line">213</div><div class="line">214</div><div class="line">215</div><div class="line">216</div><div class="line">217</div><div class="line">218</div><div class="line">219</div><div class="line">220</div><div class="line">221</div><div class="line">222</div><div class="line">223</div><div class="line">224</div><div class="line">225</div><div class="line">226</div><div class="line">227</div><div class="line">228</div><div class="line">229</div><div class="line">230</div><div class="line">231</div><div class="line">232</div><div class="line">233</div><div class="line">234</div><div class="line">235</div><div class="line">236</div><div class="line">237</div><div class="line">238</div><div class="line">239</div><div class="line">240</div><div class="line">241</div><div class="line">242</div><div class="line">243</div><div class="line">244</div><div class="line">245</div><div class="line">246</div><div class="line">247</div><div class="line">248</div><div class="line">249</div><div class="line">250</div><div class="line">251</div><div class="line">252</div><div class="line">253</div><div class="line">254</div><div class="line">255</div><div class="line">256</div><div class="line">257</div><div class="line">258</div><div class="line">259</div><div class="line">260</div><div class="line">261</div><div class="line">262</div><div class="line">263</div><div class="line">264</div><div class="line">265</div><div class="line">266</div><div class="line">267</div><div class="line">268</div><div class="line">269</div><div class="line">270</div><div class="line">271</div><div class="line">272</div><div class="line">273</div><div class="line">274</div><div class="line">275</div><div class="line">276</div><div class="line">277</div><div class="line">278</div><div class="line">279</div><div class="line">280</div><div class="line">281</div><div class="line">282</div><div class="line">283</div><div class="line">284</div><div class="line">285</div><div class="line">286</div><div class="line">287</div><div class="line">288</div><div class="line">289</div><div class="line">290</div><div class="line">291</div><div class="line">292</div><div class="line">293</div><div class="line">294</div><div class="line">295</div><div class="line">296</div><div class="line">297</div><div class="line">298</div><div class="line">299</div><div class="line">300</div><div class="line">301</div><div class="line">302</div><div class="line">303</div><div class="line">304</div><div class="line">305</div><div class="line">306</div><div class="line">307</div><div class="line">308</div><div class="line">309</div><div class="line">310</div></pre></td><td class="code"><pre><div class="line">C:\WINDOWS\system32&gt;jstack 8648</div><div class="line">2016-08-11 22:34:47</div><div class="line">Full thread dump Java HotSpot(TM) 64-Bit Server VM (25.66-b18 mixed mode):</div><div class="line"></div><div class="line"><span class="string">"Timer1"</span> <span class="comment">#31 daemon prio=5 os_prio=0 tid=0x000000001a75a800 nid=0x21dc waiting on condition [0x000000001e0df000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c00730&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"Timer0"</span> <span class="comment">#30 daemon prio=5 os_prio=0 tid=0x000000001a759000 nid=0x1ce0 waiting on condition [0x000000001dfde000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c00730&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor7"</span> <span class="comment">#29 daemon prio=5 os_prio=0 tid=0x000000001a759800 nid=0x13b4 waiting on condition [0x000000001dbde000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor6"</span> <span class="comment">#28 daemon prio=5 os_prio=0 tid=0x000000001a75b000 nid=0x1090 waiting on condition [0x000000001dade000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor5"</span> <span class="comment">#27 daemon prio=5 os_prio=0 tid=0x000000001a753800 nid=0xf08 waiting on condition [0x000000001d9de000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor4"</span> <span class="comment">#26 daemon prio=5 os_prio=0 tid=0x000000001a758000 nid=0x14a0 waiting on condition [0x000000001d8df000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor3"</span> <span class="comment">#25 daemon prio=5 os_prio=0 tid=0x000000001a756800 nid=0x21c4 waiting on condition [0x000000001d7de000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor2"</span> <span class="comment">#24 daemon prio=5 os_prio=0 tid=0x000000001a757800 nid=0x21c0 waiting on condition [0x000000001d6de000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor1"</span> <span class="comment">#23 daemon prio=5 os_prio=0 tid=0x000000001a755000 nid=0x21b4 waiting on condition [0x000000001d5de000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"BusinessExecutor0"</span> <span class="comment">#22 daemon prio=5 os_prio=0 tid=0x000000001a4e5000 nid=0x21b0 waiting on condition [0x000000001d4de000]</span></div><div class="line">   java.lang.Thread.State: WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7c18178&gt; (a java.util.concurrent.LinkedTransferQueue)</div><div class="line">        at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.awaitMatch(LinkedTransferQueue.java:737)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.xfer(LinkedTransferQueue.java:647)</div><div class="line">        at java.util.concurrent.LinkedTransferQueue.take(LinkedTransferQueue.java:1269)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1067)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1127)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:617)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_MyCatServer</span>"</span> <span class="comment">#21 prio=5 os_prio=0 tid=0x000000001a4ec000 nid=0x21b8 runnable [0x000000001d3de000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c0bb68&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c0bb78&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c0bae8&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOAcceptor.run(NIOAcceptor.java:86)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_MyCatManager</span>"</span> <span class="comment">#20 prio=5 os_prio=0 tid=0x000000001a4ea800 nid=0x21bc runnable [0x000000001d2df000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c00de8&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c00df8&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c00d68&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOAcceptor.run(NIOAcceptor.java:86)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_NIOConnector</span>"</span> <span class="comment">#19 prio=5 os_prio=0 tid=0x000000001a4e9000 nid=0x20f0 runnable [0x000000001d1de000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c1b600&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c1b610&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c1b580&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOConnector.run(NIOConnector.java:76)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_NIOREACTOR</span>-3-RW"</span> <span class="comment">#18 prio=5 os_prio=0 tid=0x000000001a4e8000 nid=0x2314 runnable [0x000000001d0de000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c13868&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c13878&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c137e8&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOReactor<span class="variable">$RW</span>.run(NIOReactor.java:89)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_NIOREACTOR</span>-2-RW"</span> <span class="comment">#17 prio=5 os_prio=0 tid=0x000000001a4e6800 nid=0x1774 runnable [0x000000001cfdf000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c1e880&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c1e890&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c1e800&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOReactor<span class="variable">$RW</span>.run(NIOReactor.java:89)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_NIOREACTOR</span>-1-RW"</span> <span class="comment">#16 prio=5 os_prio=0 tid=0x000000001a4e7800 nid=0x2320 runnable [0x000000001cede000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c07a68&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c07a78&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c079e8&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOReactor<span class="variable">$RW</span>.run(NIOReactor.java:89)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"<span class="variable">$_NIOREACTOR</span>-0-RW"</span> <span class="comment">#15 prio=5 os_prio=0 tid=0x000000001a4e6000 nid=0x20ac runnable [0x000000001cdde000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll0(Native Method)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.poll(WindowsSelectorImpl.java:296)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl<span class="variable">$SubSelector</span>.access<span class="variable">$400</span>(WindowsSelectorImpl.java:278)</div><div class="line">        at sun.nio.ch.WindowsSelectorImpl.doSelect(WindowsSelectorImpl.java:159)</div><div class="line">        at sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:86)</div><div class="line">        - locked &lt;0x00000000d7c0f0c0&gt; (a sun.nio.ch.Util<span class="variable">$2</span>)</div><div class="line">        - locked &lt;0x00000000d7c0f0d0&gt; (a java.util.Collections<span class="variable">$UnmodifiableSet</span>)</div><div class="line">        - locked &lt;0x00000000d7c0f040&gt; (a sun.nio.ch.WindowsSelectorImpl)</div><div class="line">        at sun.nio.ch.SelectorImpl.select(SelectorImpl.java:97)</div><div class="line">        at org.opencloudb.net.NIOReactor<span class="variable">$RW</span>.run(NIOReactor.java:89)</div><div class="line">        at java.lang.Thread.run(Thread.java:745)</div><div class="line"></div><div class="line"><span class="string">"Log4jWatchdog"</span> <span class="comment">#14 daemon prio=5 os_prio=0 tid=0x000000001a4e9800 nid=0x16d0 waiting on condition [0x000000001bd0f000]</span></div><div class="line">   java.lang.Thread.State: TIMED_WAITING (sleeping)</div><div class="line">        at java.lang.Thread.sleep(Native Method)</div><div class="line">        at org.apache.log4j.helpers.FileWatchdog.run(FileWatchdog.java:104)</div><div class="line"></div><div class="line"><span class="string">"net.sf.ehcache.CacheManager@3abfe836"</span> <span class="comment">#12 daemon prio=5 os_prio=0 tid=0x000000001a4eb000 nid=0x2298 in Object.wait() [0x000000001bb0f000]</span></div><div class="line">   java.lang.Thread.State: WAITING (on object monitor)</div><div class="line">        at java.lang.Object.wait(Native Method)</div><div class="line">        - waiting on &lt;0x00000000d7c454a8&gt; (a java.util.TaskQueue)</div><div class="line">        at java.lang.Object.wait(Object.java:502)</div><div class="line">        at java.util.TimerThread.mainLoop(Timer.java:526)</div><div class="line">        - locked &lt;0x00000000d7c454a8&gt; (a java.util.TaskQueue)</div><div class="line">        at java.util.TimerThread.run(Timer.java:505)</div><div class="line"></div><div class="line"><span class="string">"MyCatTimer"</span> <span class="comment">#11 daemon prio=5 os_prio=0 tid=0x000000001a372000 nid=0x1f48 in Object.wait() [0x000000001b7bf000]</span></div><div class="line">   java.lang.Thread.State: TIMED_WAITING (on object monitor)</div><div class="line">        at java.lang.Object.wait(Native Method)</div><div class="line">        at java.util.TimerThread.mainLoop(Timer.java:552)</div><div class="line">        - locked &lt;0x00000000d7c46428&gt; (a java.util.TaskQueue)</div><div class="line">        at java.util.TimerThread.run(Timer.java:505)</div><div class="line"></div><div class="line"><span class="string">"Thread-0"</span> <span class="comment">#10 prio=5 os_prio=0 tid=0x0000000019e9b000 nid=0x2304 waiting on condition [0x000000001a6ee000]</span></div><div class="line">   java.lang.Thread.State: TIMED_WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to <span class="built_in">wait</span> <span class="keyword">for</span>  &lt;0x00000000d7cda8b0&gt; (a java.util.concurrent.locks.AbstractQueuedSynchronizer<span class="variable">$ConditionObject</span>)</div><div class="line">        at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)</div><div class="line">        at java.util.concurrent.locks.AbstractQueuedSynchronizer<span class="variable">$ConditionObject</span>.awaitNanos(AbstractQueuedSynchronizer.java:2078)</div><div class="line">        at java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:467)</div><div class="line">        at org.opencloudb.route.MyCATSequnceProcessor<span class="variable">$ExecuteThread</span>.run(MyCATSequnceProcessor.java:102)</div><div class="line"></div><div class="line"><span class="string">"Service Thread"</span> <span class="comment">#9 daemon prio=9 os_prio=0 tid=0x000000001967d000 nid=0x1f5c runnable [0x0000000000000000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line"><span class="string">"C1 CompilerThread2"</span> <span class="comment">#8 daemon prio=9 os_prio=2 tid=0x00000000195f7800 nid=0x213c waiting on condition [0x0000000000000000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line"><span class="string">"C2 CompilerThread1"</span> <span class="comment">#7 daemon prio=9 os_prio=2 tid=0x00000000195f1000 nid=0x20fc waiting on condition [0x0000000000000000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line"><span class="string">"C2 CompilerThread0"</span> <span class="comment">#6 daemon prio=9 os_prio=2 tid=0x0000000017f9a800 nid=0x1cdc waiting on condition [0x0000000000000000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line"><span class="string">"Attach Listener"</span> <span class="comment">#5 daemon prio=5 os_prio=2 tid=0x0000000017f4f000 nid=0x72c waiting on condition [0x0000000000000000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line"><span class="string">"Signal Dispatcher"</span> <span class="comment">#4 daemon prio=9 os_prio=2 tid=0x0000000017f4e000 nid=0x214c runnable [0x0000000000000000]</span></div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line"><span class="string">"Finalizer"</span> <span class="comment">#3 daemon prio=8 os_prio=1 tid=0x00000000033b7000 nid=0x2150 in Object.wait() [0x000000001928f000]</span></div><div class="line">   java.lang.Thread.State: WAITING (on object monitor)</div><div class="line">        at java.lang.Object.wait(Native Method)</div><div class="line">        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:143)</div><div class="line">        - locked &lt;0x00000000d7d301b0&gt; (a java.lang.ref.ReferenceQueue<span class="variable">$Lock</span>)</div><div class="line">        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:164)</div><div class="line">        at java.lang.ref.Finalizer<span class="variable">$FinalizerThread</span>.run(Finalizer.java:209)</div><div class="line"></div><div class="line"><span class="string">"Reference Handler"</span> <span class="comment">#2 daemon prio=10 os_prio=2 tid=0x0000000017f09000 nid=0x1328 in Object.wait() [0x000000001918f000]</span></div><div class="line">   java.lang.Thread.State: WAITING (on object monitor)</div><div class="line">        at java.lang.Object.wait(Native Method)</div><div class="line">        at java.lang.Object.wait(Object.java:502)</div><div class="line">        at java.lang.ref.Reference<span class="variable">$ReferenceHandler</span>.run(Reference.java:157)</div><div class="line">        - locked &lt;0x00000000d7d303c8&gt; (a java.lang.ref.Reference<span class="variable">$Lock</span>)</div><div class="line"></div><div class="line"><span class="string">"main"</span> <span class="comment">#1 prio=5 os_prio=0 tid=0x00000000030be000 nid=0x22c8 waiting on condition [0x00000000032bf000]</span></div><div class="line">   java.lang.Thread.State: TIMED_WAITING (sleeping)</div><div class="line">        at java.lang.Thread.sleep(Native Method)</div><div class="line">        at org.opencloudb.MycatStartup.main(MycatStartup.java:57)</div><div class="line"></div><div class="line"><span class="string">"VM Thread"</span> os_prio=2 tid=0x0000000017f07000 nid=0x1218 runnable</div><div class="line"></div><div class="line"><span class="string">"GC task thread#0 (ParallelGC)"</span> os_prio=0 tid=0x00000000032d7800 nid=0x1d54 runnable</div><div class="line"></div><div class="line"><span class="string">"GC task thread#1 (ParallelGC)"</span> os_prio=0 tid=0x00000000032d9000 nid=0x23f4 runnable</div><div class="line"></div><div class="line"><span class="string">"GC task thread#2 (ParallelGC)"</span> os_prio=0 tid=0x00000000032da800 nid=0x1600 runnable</div><div class="line"></div><div class="line"><span class="string">"GC task thread#3 (ParallelGC)"</span> os_prio=0 tid=0x00000000032dc000 nid=0x1aac runnable</div><div class="line"></div><div class="line"><span class="string">"VM Periodic Task Thread"</span> os_prio=2 tid=0x00000000196b9800 nid=0x2308 waiting on condition</div><div class="line"></div><div class="line">JNI global references: 253</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Mycat/" rel="tag"># Mycat</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/26/mycat-tx-manage-introduction/" rel="next" title="Mycat事务管理分析">
+                <i class="fa fa-chevron-left"></i> Mycat事务管理分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/09/21/mycat-server-prepare-introduction/" rel="prev" title="Mycat预处理功能分析">
+                Mycat预处理功能分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-线程模型图"><span class="nav-number">1.</span> <span class="nav-text">1. 线程模型图</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-网络通讯线程"><span class="nav-number">2.</span> <span class="nav-text">2. 网络通讯线程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-NIOAcceptor"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 NIOAcceptor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-NIOConnector"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 NIOConnector</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-NIOReactor"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 NIOReactor</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-业务线程"><span class="nav-number">3.</span> <span class="nav-text">3. 业务线程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-定时任务线程"><span class="nav-number">4.</span> <span class="nav-text">4. 定时任务线程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#5-jstack-dump线程"><span class="nav-number">5.</span> <span class="nav-text">5. jstack dump线程</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

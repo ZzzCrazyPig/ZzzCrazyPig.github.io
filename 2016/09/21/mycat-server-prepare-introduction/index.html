@@ -1,0 +1,797 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Mycat," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="前言Mycat从1.6版本开始支持预处理。目前1.6分支还是开发测试阶段。Mycat发展自Cobar，在Cobar源码里面可以看到预处理功能的影子(未完全实现，当然你如果往Cobar上面调用预处理命令，那么Cobar会返回结果，告诉你，我是不支持预处理sql的!)。我在以前的公司接到需求，需要在Mycat中实现预处理，所以花了时间研究了这部分代码并以自己的思路去实现。后面我将代码贡献给社区，在社区">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mycat预处理功能分析">
+<meta property="og:url" content="http://yoursite.com/2016/09/21/mycat-server-prepare-introduction/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="前言Mycat从1.6版本开始支持预处理。目前1.6分支还是开发测试阶段。Mycat发展自Cobar，在Cobar源码里面可以看到预处理功能的影子(未完全实现，当然你如果往Cobar上面调用预处理命令，那么Cobar会返回结果，告诉你，我是不支持预处理sql的!)。我在以前的公司接到需求，需要在Mycat中实现预处理，所以花了时间研究了这部分代码并以自己的思路去实现。后面我将代码贡献给社区，在社区">
+<meta property="og:image" content="https://dev.mysql.com/doc/internals/en/images/graphviz-ec88bc310020c1bb00fe2f43e9cdaaa83c6c6793.png">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-prepare-unstandingmycat-prepare-workflow.png">
+<meta property="og:updated_time" content="2017-08-05T06:42:35.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mycat预处理功能分析">
+<meta name="twitter:description" content="前言Mycat从1.6版本开始支持预处理。目前1.6分支还是开发测试阶段。Mycat发展自Cobar，在Cobar源码里面可以看到预处理功能的影子(未完全实现，当然你如果往Cobar上面调用预处理命令，那么Cobar会返回结果，告诉你，我是不支持预处理sql的!)。我在以前的公司接到需求，需要在Mycat中实现预处理，所以花了时间研究了这部分代码并以自己的思路去实现。后面我将代码贡献给社区，在社区">
+<meta name="twitter:image" content="https://dev.mysql.com/doc/internals/en/images/graphviz-ec88bc310020c1bb00fe2f43e9cdaaa83c6c6793.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/09/21/mycat-server-prepare-introduction/"/>
+
+
+
+
+
+  <title> Mycat预处理功能分析 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/21/mycat-server-prepare-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Mycat预处理功能分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-21T00:00:00+08:00">
+                2016-09-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mycat-源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Mycat.源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>Mycat从1.6版本开始支持预处理。目前1.6分支还是开发测试阶段。Mycat发展自Cobar，在Cobar源码里面可以看到预处理功能的影子(未完全实现，<strong>当然你如果往Cobar上面调用预处理命令，那么Cobar会返回结果，告诉你，我是不支持预处理sql的</strong>!)。我在以前的公司接到需求，需要在Mycat中实现预处理，所以花了时间研究了这部分代码并以自己的思路去实现。后面我将代码贡献给社区，在社区的帮助下，修复了一些bug，最终整合到1.6分支上。</p>
+<p>Mycat预处理的使用场景不多，针对java开发来说(大量持久层框架)，jdbc一般不会开启服务端预处理(后面章节会讲到mysql jdbc客户端预处理和服务端预处理)。因此，如果应用以java语言连接Mycat，很少能够使用到Mycat的预处理功能。但是如果是C、C++、或者PHP，那么使用到mysql预处理命令来进行操作的可能性就会大很多，如果应用是以上述语言实现，那么很可能会用到Mycat的预处理功能。</p>
+<a id="more"></a>
+<h1 id="1-mysql预处理"><a href="#1-mysql预处理" class="headerlink" title="1. mysql预处理"></a>1. mysql预处理</h1><p>在介绍Mycat预处理的实现机制之前，需要先解释mysql的预处理功能：</p>
+<h2 id="1-1-预处理说明"><a href="#1-1-预处理说明" class="headerlink" title="1.1 预处理说明"></a>1.1 预处理说明</h2><p>mysql从5.1版本开始支持sql预处理功能。sql预处理首先要求客户端提交需要执行的sql，这时提交的sql不传递真实的参数值，参数以问号的形式传递过去<br>eg:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">insert</span> <span class="keyword">into</span> <span class="keyword">user</span>(<span class="keyword">id</span>, <span class="keyword">name</span>) <span class="keyword">values</span>(?, ?);</div><div class="line"><span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">user</span> <span class="keyword">where</span> <span class="keyword">id</span> = ?;</div></pre></td></tr></table></figure>
+<p>在mysql服务端完成预编译解析，这里的预编译解析包括解析参数的个数、类型等，然后响应给客户端。接下来客户端第二次交互只需要传递参数过去就可以完成一个完整sql的执行。相比传统的sql执行，预处理需要两次交互，才能够完成一次sql执行，那么预处理sql的优势在哪里呢？</p>
+<p>(1) 预处理sql能防止一定程度的sql注入</p>
+<p>(2) sql预编译效率更高</p>
+<p>多次执行相同的sql语句(参数不变或者有变化)，预处理sql的执行效率优于普通的sql语句。这是因为多次执行只需要传递一次sql到服务端完成预编译和解析，而后只需要多次传递参数执行即可。</p>
+<p>(3) 二进制包协议让sql预处理更加高效</p>
+<p>mysql预处理命令参数的封装以及结果集的返回，均采用二进制格式封装数据，体积更小，面向底层，能直接被mysql服务端利用。相比普通sql文本协议传输的数据，二进制协议传输数据更加高效。</p>
+<h2 id="1-2-预处理命令说明"><a href="#1-2-预处理命令说明" class="headerlink" title="1.2 预处理命令说明"></a>1.2 预处理命令说明</h2><h3 id="1-2-1-COM-STMT-PREPARE"><a href="#1-2-1-COM-STMT-PREPARE" class="headerlink" title="1.2.1 COM_STMT_PREPARE"></a>1.2.1 COM_STMT_PREPARE</h3><p><code>COM_STMT_PREPARE</code>命令用于客户端往服务端提交一个预处理的sql，如上面提到的:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">insert</span> <span class="keyword">into</span> <span class="keyword">user</span>(<span class="keyword">id</span>, <span class="keyword">name</span>) <span class="keyword">values</span>(?,?);</div></pre></td></tr></table></figure></p>
+<p>该命令的协议格式参考<a href="https://dev.mysql.com/doc/internals/en/com-stmt-prepare.html" target="_blank" rel="external">COM_STMT_PREPARE协议格式</a></p>
+<h3 id="1-2-2-COM-STMT-EXECUTE"><a href="#1-2-2-COM-STMT-EXECUTE" class="headerlink" title="1.2.2 COM_STMT_EXECUTE"></a>1.2.2 COM_STMT_EXECUTE</h3><p><code>COM_STMT_EXECUTE</code>用于执行预处理sql。正如我们前面说到的，如果预处理sql需要传递参数，这个命令会发送预处理语句所需要的参数到服务端。如上面的例子，我们需要传递两个参数<code>id</code>和<code>user</code>的具体值到服务端。</p>
+<p>该命令的协议格式参考<a href="https://dev.mysql.com/doc/internals/en/com-stmt-execute.html" target="_blank" rel="external">COM_STMT_EXECUTE协议格式</a></p>
+<h3 id="1-2-3-COM-STMT-CLOSE"><a href="#1-2-3-COM-STMT-CLOSE" class="headerlink" title="1.2.3 COM_STMT_CLOSE"></a>1.2.3 COM_STMT_CLOSE</h3><p><code>COM_STMT_CLOSE</code>用于关闭服务端预处理sql。每一个预处理的sql提交后都保存在mysql服务端的内存当中，每个预处理sql都有一个唯一的id标识，这个命令将发送需要关闭的sql的id，通知服务端可以将所有该预处理sql的资源释放掉(过多的预处理sql保留在mysql服务端会占用较多的内存, 因此有必要执行该命令清理无用的预处理sql)。</p>
+<p>该命令的协议格式参考<a href="https://dev.mysql.com/doc/internals/en/com-stmt-reset.html" target="_blank" rel="external">COM_STMT_CLOSE协议格式</a></p>
+<h3 id="1-2-4-COM-STMT-RESET"><a href="#1-2-4-COM-STMT-RESET" class="headerlink" title="1.2.4 COM_STMT_RESET"></a>1.2.4 COM_STMT_RESET</h3><p><code>COM_STMT_RESET</code>命令用于重置<code>COM_STMT_SEND_LONG_DATA</code>命令发送的blob数据。</p>
+<p>该命令的协议格式参考<a href="https://dev.mysql.com/doc/internals/en/com-stmt-send-long-data.html" target="_blank" rel="external">COM_STMT_SEND_LONG_DATA协议格式</a></p>
+<h3 id="1-2-5-COM-STMT-SEND-LONG-DATA"><a href="#1-2-5-COM-STMT-SEND-LONG-DATA" class="headerlink" title="1.2.5 COM_STMT_SEND_LONG_DATA"></a>1.2.5 COM_STMT_SEND_LONG_DATA</h3><p><code>COM_STMT_SEND_LONG_DATA</code>用于往服务端发送字节流数据，通常来说只有在发送blob字段数据才需要用到该命令。可以多次调用该命令续传同一个字段的字节数据。注意这个命令必须<code>COM_STMT_EXECUTE</code>命令发送之前执行。</p>
+<p>该命令的协议格式参考<a href="https://dev.mysql.com/doc/internals/en/com-stmt-send-long-data.html" target="_blank" rel="external">COM_STMT_SEND_LONG_DATA</a></p>
+<h2 id="1-3-预处理协议结果包说明"><a href="#1-3-预处理协议结果包说明" class="headerlink" title="1.3 预处理协议结果包说明"></a>1.3 预处理协议结果包说明</h2><p>mysql预处理结果集采用了二进制协议包进行封装，与普通的查询结果集格式不同（普通的结果集包采用文本协议包进行封装）。下面我们分别对<strong>普通查询结果集协议包</strong>和<strong>预处理结果集协议包</strong>进行介绍：</p>
+<h3 id="1-3-1-普通查询结果集协议包"><a href="#1-3-1-普通查询结果集协议包" class="headerlink" title="1.3.1 普通查询结果集协议包"></a>1.3.1 普通查询结果集协议包</h3><p>普通sql查询(相比预处理sql查询)返回的结果集包用文本协议(官方称为Text Protocol)封装。文本协议的结果集包格式根据官网的一个图来说明:</p>
+<p><img src="https://dev.mysql.com/doc/internals/en/images/graphviz-ec88bc310020c1bb00fe2f43e9cdaaa83c6c6793.png" alt="mysql_text_protocol_resulset_format"></p>
+<p>一个结果集包主要包括以下部分(顺序传输):</p>
+<ul>
+<li>one packet show field count(第一个packet用于表示返回结果集列数)</li>
+<li>column define packets(一个列就是一个packet,格式参考<a href="https://dev.mysql.com/doc/internals/en/com-query-response.html#column-definition" target="_blank" rel="external">Column Define Packet</a>)</li>
+<li><a href="https://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html" target="_blank" rel="external">EOF Packet</a></li>
+<li>row packets(一行数据就是一个packet,格式参考<a href="https://dev.mysql.com/doc/internals/en/com-query-response.html#packet-ProtocolText::ResultsetRow" target="_blank" rel="external">ResultsetRow Packet</a>)</li>
+<li><a href="https://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html" target="_blank" rel="external">EOF Packet</a></li>
+</ul>
+<h3 id="1-3-2-预处理结果集协议包"><a href="#1-3-2-预处理结果集协议包" class="headerlink" title="1.3.2 预处理结果集协议包"></a>1.3.2 预处理结果集协议包</h3><p>预处理结果集包的组成和普通协议包类似，区别只在于<strong>row packet</strong>(数据以二进制协议格式存放)。</p>
+<ul>
+<li>one packet show field count(第一个packet用于表示返回结果集列数)</li>
+<li>column define packets(一个列就是一个packet,格式参考<a href="https://dev.mysql.com/doc/internals/en/com-query-response.html#column-definition" target="_blank" rel="external">Column Define Packet</a>)</li>
+<li><a href="https://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html" target="_blank" rel="external">EOF Packet</a></li>
+<li>binary row packets(一行数据一个packet, 格式参考<a href="https://dev.mysql.com/doc/internals/en/binary-protocol-resultset-row.html#packet-ProtocolBinary::ResultsetRow" target="_blank" rel="external">Binary Row Packet</a>)</li>
+<li><a href="https://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html" target="_blank" rel="external">EOF Packet</a></li>
+</ul>
+<p><strong>【说明】</strong><br><code>Binary Row Packet</code>的第一个字节恒为<code>0</code>，表示<code>packet header</code>，接下来，由<code>NULL-Bitmap</code>标示那些值为<code>NULL</code>的列，<code>NULL-Bitmap</code>的长度计算方式为<code>(column-count + 7 + 2) / 8</code>，其中<code>column-count</code>表示列数，而非空的列值以二进制协议格式(协议格式参考<a href="https://dev.mysql.com/doc/internals/en/binary-protocol-value.html" target="_blank" rel="external">Binary Protocol Value</a>)顺序存储在<code>NULL-Bitmap</code>的后面。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Binary Row Packet payload :</div><div class="line"></div><div class="line">1              packet header [00]</div><div class="line">string[$len]   NULL-bitmap, length: (column-count + 7 + 2) / 8</div><div class="line">string[$len]   values</div></pre></td></tr></table></figure>
+<p><strong>【温馨提示】</strong></p>
+<p>返回相同结果行，预处理包协议包所占字节会比普通协议包小，在列数越多，列越长的情况下，相差的大小越明显。</p>
+<h1 id="2-mysql-jdbc预处理"><a href="#2-mysql-jdbc预处理" class="headerlink" title="2. mysql jdbc预处理"></a>2. mysql jdbc预处理</h1><p>我们知道，使用<code>java.sql.PrepareStatement</code> 可以执行预处理sql。mysql jdbc实现了该接口，并且将预处理分为<strong>客户端预处理</strong>和<strong>服务端预处理</strong>。</p>
+<h2 id="2-1-jdbc客户端预处理"><a href="#2-1-jdbc客户端预处理" class="headerlink" title="2.1 jdbc客户端预处理"></a>2.1 jdbc客户端预处理</h2><p><strong>mysql jdbc默认情况下采用的就是客户端预处理</strong>。客户端预处理的意思是，所有预处理参数都将被缓存在mysql jdbc层，而不是缓存在mysql server。在<code>PrepareStatement</code>执行的时候，在jdbc端完成sql语句的拼接（主要是使用缓存的参数对sql中问号?进行替换，最终发送到mysql的就是完整的sql语句）。<strong>客户端预处理走的是普通的查询协议，而不是真正的mysql预处理协议。</strong></p>
+<h2 id="2-2-jdbc服务端预处理"><a href="#2-2-jdbc服务端预处理" class="headerlink" title="2.2 jdbc服务端预处理"></a>2.2 jdbc服务端预处理</h2><p>在jdbcUrl中，如果显式地指定连接参数<code>useServerPrepStmts=true</code>，表示开启服务端预处理,eg:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jdbc:mysql://localhost:3306:test?useServerPrepStmts=true</div></pre></td></tr></table></figure>
+<p>这种情况下jdbc会使用真正的mysql预处理协议与server进行通讯，在<code>PrepareStatement</code>生成的时候，就会把预处理的sql语句(eg: <code>insert into user(id, name) values(?, ?);</code>)发送到mysql server端，而后使用<code>PrepareStatement</code>设置的查询参数，将会在<code>PrepareStatement</code>执行的时候发送到mysql服务端。</p>
+<p>jdbc API 与 MySQL Prepare Command的关系为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">Connection prepareStatement -&gt; COM_STMT_PREPARE</div><div class="line"></div><div class="line">PrepareStatement setXxx(colIndex, value)</div><div class="line"></div><div class="line">...</div><div class="line"></div><div class="line">PrepareStatement executeQuery(execute or executeUpdate) -&gt; COM_STMT_EXECUTE</div><div class="line"></div><div class="line">PrepareStatement close -&gt; COM_STMT_CLOSE</div></pre></td></tr></table></figure>
+<p><strong>【温馨提示】</strong></p>
+<p>mysql jdbc的<code>com.mysql.jdbc.ServerPreparedStatement</code>就是用来实现服务端预处理。有兴趣的同学可以搜一下这个类的源码，可以在里面搜索到上面说到的预处理命令的发送。</p>
+<p>很少人在用到连接池框架(针对java)的时候，会在jdbcUrl中指定<code>useServerPrepStmts=true</code>，所以几乎也没人会用到真正的服务端预处理。</p>
+<h1 id="3-Mycat预处理实现机制"><a href="#3-Mycat预处理实现机制" class="headerlink" title="3. Mycat预处理实现机制"></a>3. Mycat预处理实现机制</h1><p>Mycat中也实现了mysql的预处理协议，可以接收预处理命令的处理。当使用预处理查询，也可以返回正确的二进制结果集包。Mycat预处理的实现是一种取巧的设计，查询走到后端mysql实际上不是发送了预处理命令，而是普通的COM_QUERY命令，后端mysql返回给Mycat的结果集包也是文本协议包，只是在Mycat将结果集包发送往客户端(前端)的中间过程，将普通的文本协议结果集包包装成为二进制协议结果集包，然后再返回给客户端。</p>
+<h2 id="3-1-预处理流程图"><a href="#3-1-预处理流程图" class="headerlink" title="3.1 预处理流程图"></a>3.1 预处理流程图</h2><p>以一个流程图来说明Mycat预处理的处理流程:</p>
+<p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-prepare-unstandingmycat-prepare-workflow.png" alt="mycat-prepare-unstandingmycat-prepare-workflow"></p>
+<p>如上图所示，Mycat接收到客户端发送的COM_STMT_PREPARE命令后，解析协议包的内容得到预处理sql语句，eg: insert into user(id, name) values(?, ?)，将这些预处理语句缓存在Mycat里面，当Mycat再次接收到客户端发送的COM_STMT_EXECUTE命令，就把对应sql的问号替换为实际传递过来的参数值，这时候已经得到了完整的sql语句。接下来，直接把这个语句丢给Mycat sql查询处理器去执行，中间会经过sql解析模块，路由解析模块以及最后的执行。最后，当收到后端mysql传递给Mycat的数据准备发往客户端的时候，做一个协议包转换，将普通文本结果集协议包转换成二进制结果集协议包并发往客户端。就是这样，在Mycat里面处理预处理命令的接收与处理，并将结果集封装好发送给客户端，<strong>让客户端看起来Mycat是真正地实现了预处理sql</strong>。</p>
+<h2 id="3-2-预处理命令接收处理"><a href="#3-2-预处理命令接收处理" class="headerlink" title="3.2 预处理命令接收处理"></a>3.2 预处理命令接收处理</h2><p>Mycat对前端发来的命令处理体现在FrontendCommandHandler的handle方法上，同样对于预处理命令的接收判断，是在这个方法上:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handle</span><span class="params">(<span class="keyword">byte</span>[] data)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span>(source.getLoadDataInfileHandler()!=<span class="keyword">null</span>&amp;&amp;source.getLoadDataInfileHandler().isStartLoadData())</div><div class="line">        &#123;</div><div class="line">            MySQLMessage mm = <span class="keyword">new</span> MySQLMessage(data);</div><div class="line">            <span class="keyword">int</span>  packetLength = mm.readUB3();</div><div class="line">            <span class="keyword">if</span>(packetLength+<span class="number">4</span>==data.length)</div><div class="line">            &#123;</div><div class="line">                source.loadDataInfileData(data);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">return</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">switch</span> (data[<span class="number">4</span>])</div><div class="line">        &#123;</div><div class="line"></div><div class="line">            ...</div><div class="line"></div><div class="line">            <span class="keyword">case</span> MySQLPacket.COM_STMT_PREPARE:</div><div class="line">                commands.doStmtPrepare();</div><div class="line">                source.stmtPrepare(data);</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            <span class="keyword">case</span> MySQLPacket.COM_STMT_SEND_LONG_DATA:</div><div class="line">            	commands.doStmtSendLongData();</div><div class="line">            	source.stmtSendLongData(data);</div><div class="line">            	<span class="keyword">break</span>;</div><div class="line">            <span class="keyword">case</span> MySQLPacket.COM_STMT_RESET:</div><div class="line">            	commands.doStmtReset();</div><div class="line">            	source.stmtReset(data);</div><div class="line">            	<span class="keyword">break</span>;</div><div class="line">            <span class="keyword">case</span> MySQLPacket.COM_STMT_EXECUTE:</div><div class="line">                commands.doStmtExecute();</div><div class="line">                source.stmtExecute(data);</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            <span class="keyword">case</span> MySQLPacket.COM_STMT_CLOSE:</div><div class="line">                commands.doStmtClose();</div><div class="line">                source.stmtClose(data);</div><div class="line">                <span class="keyword">break</span>;</div><div class="line"></div><div class="line">            ...</div><div class="line"></div><div class="line">            <span class="keyword">default</span>:</div><div class="line">                     commands.doOther();</div><div class="line">                     source.writeErrMessage(ErrorCode.ER_UNKNOWN_COM_ERROR,</div><div class="line">                             <span class="string">"Unknown command"</span>);</div><div class="line"></div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>最终对预处理命令的处理交给<code>ServerPrepareHandler</code>类去处理，<code>ServerPrepareHandler</code>实现了<code>FrontendPrepareHandler</code>接口，在这个接口里面定义了预处理命令处理的相关接口:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> io.mycat.net.handler;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * SQL预处理处理器</div><div class="line"> *</div><div class="line"> * <span class="doctag">@author</span> mycat, CrazyPig</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">FrontendPrepareHandler</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">prepare</span><span class="params">(String sql)</span></span>; <span class="comment">// COM_STMT_PREPARE的处理</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">sendLongData</span><span class="params">(<span class="keyword">byte</span>[] data)</span></span>; <span class="comment">// COM_STMT_SEND_LONG_DATA的处理</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">(<span class="keyword">byte</span>[] data)</span></span>; <span class="comment">// COM_STMT_RESET的处理</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">execute</span><span class="params">(<span class="keyword">byte</span>[] data)</span></span>; <span class="comment">// COM_STMT_EXECUTE的处理</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">close</span><span class="params">(<span class="keyword">byte</span>[] data)</span></span>; <span class="comment">// COM_STMT_CLOSE的处理</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">clear</span><span class="params">()</span></span>; <span class="comment">// 在前端连接关闭时清理资源</span></div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>【温馨提示】</strong></p>
+<p><code>clear()</code>的调用会清理该连接所缓存的所有预处理sql数据。</p>
+<p>下面重点介绍三个主要方法的逻辑代码:</p>
+<h3 id="3-2-1-ServerPrepareHandler-prepare方法"><a href="#3-2-1-ServerPrepareHandler-prepare方法" class="headerlink" title="3.2.1 ServerPrepareHandler.prepare方法"></a>3.2.1 ServerPrepareHandler.prepare方法</h3><p>在这个方法里面，解析sql里面的查询列和对应的查询参数，对客户端进行应答。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">prepare</span><span class="params">(String sql)</span> </span>&#123;</div><div class="line"></div><div class="line">    	LOGGER.debug(<span class="string">"use server prepare, sql: "</span> + sql);</div><div class="line">        PreparedStatement pstmt = <span class="keyword">null</span>;</div><div class="line">        <span class="keyword">if</span> ((pstmt = pstmtForSql.get(sql)) == <span class="keyword">null</span>) &#123;</div><div class="line">        	<span class="comment">// 解析获取字段个数和参数个数</span></div><div class="line">        	<span class="keyword">int</span> columnCount = getColumnCount(sql);</div><div class="line">        	<span class="keyword">int</span> paramCount = getParamCount(sql);</div><div class="line">            pstmt = <span class="keyword">new</span> PreparedStatement(++pstmtId, sql, columnCount, paramCount);</div><div class="line">            pstmtForSql.put(pstmt.getStatement(), pstmt);</div><div class="line">            pstmtForId.put(pstmt.getId(), pstmt);</div><div class="line">        &#125;</div><div class="line">        PreparedStmtResponse.response(pstmt, source); <span class="comment">// 发送响应包给客户端(响应包的封装 -&gt; `PreparedOkPacket.java`)</span></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<h3 id="3-2-1-ServerPrepareHandler-execute方法"><a href="#3-2-1-ServerPrepareHandler-execute方法" class="headerlink" title="3.2.1 ServerPrepareHandler.execute方法"></a>3.2.1 ServerPrepareHandler.execute方法</h3><p>入参是<code>COM_STMT_EXECUTE</code>整个报文的字节，这个方法首先需要解析出这个包所带的信息，如要执行的预处理sql的id标识以及对应的执行参数(如果有的话), 然后完成预处理sql的拼接，最后交给Mycat SQL查询模块去执行:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">execute</span><span class="params">(<span class="keyword">byte</span>[] data)</span> </span>&#123;</div><div class="line">        <span class="keyword">long</span> pstmtId = ByteUtil.readUB4(data, <span class="number">5</span>);</div><div class="line">        PreparedStatement pstmt = <span class="keyword">null</span>;</div><div class="line">        <span class="keyword">if</span> ((pstmt = pstmtForId.get(pstmtId)) == <span class="keyword">null</span>) &#123;</div><div class="line">            source.writeErrMessage(ErrorCode.ER_ERROR_WHEN_EXECUTING_COMMAND, <span class="string">"Unknown pstmtId when executing."</span>);</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            ExecutePacket packet = <span class="keyword">new</span> ExecutePacket(pstmt); <span class="comment">// 解析COM_STMT_EXECUTE报文携带的信息</span></div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                packet.read(data, source.getCharset());</div><div class="line">            &#125; <span class="keyword">catch</span> (UnsupportedEncodingException e) &#123;</div><div class="line">                source.writeErrMessage(ErrorCode.ER_ERROR_WHEN_EXECUTING_COMMAND, e.getMessage());</div><div class="line">                <span class="keyword">return</span>;</div><div class="line">            &#125;</div><div class="line">            BindValue[] bindValues = packet.values;</div><div class="line">            <span class="comment">// 还原sql中的动态参数为实际参数值</span></div><div class="line">            String sql = prepareStmtBindValue(pstmt, bindValues);</div><div class="line">            <span class="comment">// 执行sql</span></div><div class="line">            source.getSession2().setPrepared(<span class="keyword">true</span>);</div><div class="line">            <span class="keyword">if</span>(LOGGER.isDebugEnabled()) &#123;</div><div class="line">            	LOGGER.debug(<span class="string">"execute prepare sql: "</span> + sql);</div><div class="line">            &#125;</div><div class="line">            source.query( sql ); <span class="comment">// 交给普通的查询模块进行处理</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<h3 id="3-2-3-ServerPrepareHandler-close方法"><a href="#3-2-3-ServerPrepareHandler-close方法" class="headerlink" title="3.2.3 ServerPrepareHandler.close方法"></a>3.2.3 ServerPrepareHandler.close方法</h3><p>close方法入参是<code>COM_STMT_CLOSE</code>命令的报文内容， 这个方法逻辑比较简单，就是解析出报文，需要关闭哪个预处理语句，对于Mycat来说，需要做的动作就是将缓存的预处理sql相关内容从Mycat内存中移除即可，代码如下所示:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">close</span><span class="params">(<span class="keyword">byte</span>[] data)</span> </span>&#123;</div><div class="line">    	<span class="keyword">long</span> pstmtId = ByteUtil.readUB4(data, <span class="number">5</span>); <span class="comment">// 获取prepare stmt id</span></div><div class="line">    	<span class="keyword">if</span>(LOGGER.isDebugEnabled()) &#123;</div><div class="line">    		LOGGER.debug(<span class="string">"close prepare stmt, stmtId = "</span> + pstmtId);</div><div class="line">    	&#125;</div><div class="line">    	PreparedStatement pstmt = pstmtForId.remove(pstmtId);</div><div class="line">    	<span class="keyword">if</span>(pstmt != <span class="keyword">null</span>) &#123;</div><div class="line">    		pstmtForSql.remove(pstmt.getStatement());</div><div class="line">    	&#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<h2 id="3-5-后端返回数据的处理"><a href="#3-5-后端返回数据的处理" class="headerlink" title="3.5 后端返回数据的处理"></a>3.5 后端返回数据的处理</h2><p>以查询来说，如果是路由到单节点，那么Mycat是使用<code>SingleNodeHandler</code>来处理结果集的返回，对于row packet的处理，体现在该类的<code>rowResponse</code>方法里面，预处理最后一步处理<strong>结果集包转换</strong>正是在这个方法里面完成的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">	 * select</div><div class="line">	 *</div><div class="line">	 * 行数据返回时触发，将行数据写入缓冲区中</div><div class="line">	 */</div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">rowResponse</span><span class="params">(<span class="keyword">byte</span>[] row, BackendConnection conn)</span> </span>&#123;</div><div class="line"></div><div class="line">		<span class="keyword">this</span>.netOutBytes += row.length;</div><div class="line">		<span class="keyword">this</span>.selectRows++;</div><div class="line"></div><div class="line">		<span class="keyword">if</span> (isDefaultNodeShowTable || isDefaultNodeShowFullTable) &#123;</div><div class="line">			RowDataPacket rowDataPacket = <span class="keyword">new</span> RowDataPacket(<span class="number">1</span>);</div><div class="line">			rowDataPacket.read(row);</div><div class="line">			String table = StringUtil.decode(rowDataPacket.fieldValues.get(<span class="number">0</span>), conn.getCharset());</div><div class="line">			<span class="keyword">if</span> (shardingTablesSet.contains(table.toUpperCase())) &#123;</div><div class="line">				<span class="keyword">return</span>;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		row[<span class="number">3</span>] = ++packetId;</div><div class="line"></div><div class="line">		<span class="keyword">if</span> ( prepared ) &#123;			</div><div class="line">			RowDataPacket rowDataPk = <span class="keyword">new</span> RowDataPacket(fieldCount);</div><div class="line">			rowDataPk.read(row);			</div><div class="line">			BinaryRowDataPacket binRowDataPk = <span class="keyword">new</span> BinaryRowDataPacket();</div><div class="line">			binRowDataPk.read(fieldPackets, rowDataPk);</div><div class="line">			binRowDataPk.packetId = rowDataPk.packetId;</div><div class="line"><span class="comment">//			binRowDataPk.write(session.getSource());</span></div><div class="line">			<span class="comment">/*</span></div><div class="line">			 * [fix bug] : 这里不能直接将包写到前端连接,</div><div class="line">			 * 因为在fieldEofResponse()方法结束后buffer还没写出,</div><div class="line">			 * 所以这里应该将包数据顺序写入buffer(如果buffer满了就写出),然后再将buffer写出</div><div class="line">			 */</div><div class="line">			buffer = binRowDataPk.write(buffer, session.getSource(), <span class="keyword">true</span>);</div><div class="line">		&#125; <span class="keyword">else</span> &#123;</div><div class="line">			buffer = session.getSource().writeToBuffer(row, allocBuffer());</div><div class="line">			<span class="comment">//session.getSource().write(row);</span></div><div class="line">		&#125;</div><div class="line"></div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>由变量<code>prepared</code>来指示该查询是否为预处理查询，如果是，就进入协议包转换流程。</p>
+<p>同样的，如果查询是路由到多节点，那么Mycat是使用<code>MultiNodeQueryHandler</code>来处理结果集的返回。同样我们在<code>rowResponse</code>方法里面可以看到预处理的相应判断和处理。</p>
+<h2 id="3-4-预处理结果集包封装"><a href="#3-4-预处理结果集包封装" class="headerlink" title="3.4 预处理结果集包封装"></a>3.4 预处理结果集包封装</h2><p>预处理结果集包封装到<code>BinaryRowDataPacket</code>类里面，重要的字段:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">int</span> fieldCount; <span class="comment">// 列数量定义</span></div><div class="line"><span class="keyword">public</span> List&lt;<span class="keyword">byte</span>[]&gt; fieldValues; <span class="comment">// 列值</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">byte</span> packetHeader = (<span class="keyword">byte</span>) <span class="number">0</span>; <span class="comment">// 协议包第一个字节，恒为0</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">byte</span>[] nullBitMap; <span class="comment">// NULL-Bitmap</span></div><div class="line"></div><div class="line"><span class="keyword">public</span> List&lt;FieldPacket&gt; fieldPackets; <span class="comment">// 存放普通协议包的列值</span></div></pre></td></tr></table></figure>
+<h2 id="3-5-预处理结果集包转换为普通结果集协议包"><a href="#3-5-预处理结果集包转换为普通结果集协议包" class="headerlink" title="3.5 预处理结果集包转换为普通结果集协议包"></a>3.5 预处理结果集包转换为普通结果集协议包</h2><p>逻辑代码同样在<code>BinaryRowDataPacket</code>类里面，体现在:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">read</span><span class="params">(List&lt;FieldPacket&gt; fieldPackets, UnsafeRow unsafeRow)</span></span>;</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">read</span><span class="params">(List&lt;FieldPacket&gt; fieldPackets, RowDataPacket rowDataPk)</span></span>;</div></pre></td></tr></table></figure>
+<ul>
+<li><p>当server.xml开启<strong>isOffHeapuseOffHeapForMerge</strong>参数时,会使用UnsafeRow封装数据,因此需要从这个对象里面将数据封装成<code>BinaryRowDataPacket</code>，这个时候Mycat内部会调用第一个read方法进行包转换。</p>
+</li>
+<li><p>相反，没有开启<strong>isOffHeapuseOffHeapForMerge</strong>的情况下，会使用<code>RowDataPacket</code>来表示数据，那么这个时候Mycat会调用第二个read方法，从<code>RowDataPacket</code>转换成<code>BinaryRowDataPacket</code>。</p>
+</li>
+</ul>
+<p>【温馨提示】</p>
+<ul>
+<li><code>BinaryRowDataPacket</code>代码就不贴出来了，有兴趣的同学请自己搜一下代码去看。</li>
+<li>最后写完前端的代码封装在<strong>write</strong>方法里面。</li>
+</ul>
+<h1 id="4-写在最后"><a href="#4-写在最后" class="headerlink" title="4. 写在最后"></a>4. 写在最后</h1><p>看到这里，你会发现，其实Mycat的预处理也不是真正的预处理，最后发往后端的时候，还是利用了普通的协议，而不是真正走预处理协议。如果后端要走真正的预处理协议，需要花更大的功夫才行。目前这个实现性能上可能比不上普通的sql查询，但是基本上能满足应用调用预处理命令，以及结果的正确返回。</p>
+<p>如果您在测试中或者使用中发现这部分功能存在什么疑问、缺陷，或者有更好的改进思路，可以与我联系。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Mycat/" rel="tag"># Mycat</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/26/mycat-thread-model-introduction/" rel="next" title="Mycat线程模型分析">
+                <i class="fa fa-chevron-left"></i> Mycat线程模型分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/10/06/mycat-sqlparse-model-introduction/" rel="prev" title="Mycat sql解析模块分析">
+                Mycat sql解析模块分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#1-mysql预处理"><span class="nav-number">2.</span> <span class="nav-text">1. mysql预处理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-预处理说明"><span class="nav-number">2.1.</span> <span class="nav-text">1.1 预处理说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-预处理命令说明"><span class="nav-number">2.2.</span> <span class="nav-text">1.2 预处理命令说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-1-COM-STMT-PREPARE"><span class="nav-number">2.2.1.</span> <span class="nav-text">1.2.1 COM_STMT_PREPARE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-2-COM-STMT-EXECUTE"><span class="nav-number">2.2.2.</span> <span class="nav-text">1.2.2 COM_STMT_EXECUTE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-3-COM-STMT-CLOSE"><span class="nav-number">2.2.3.</span> <span class="nav-text">1.2.3 COM_STMT_CLOSE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-4-COM-STMT-RESET"><span class="nav-number">2.2.4.</span> <span class="nav-text">1.2.4 COM_STMT_RESET</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-5-COM-STMT-SEND-LONG-DATA"><span class="nav-number">2.2.5.</span> <span class="nav-text">1.2.5 COM_STMT_SEND_LONG_DATA</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-3-预处理协议结果包说明"><span class="nav-number">2.3.</span> <span class="nav-text">1.3 预处理协议结果包说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-1-普通查询结果集协议包"><span class="nav-number">2.3.1.</span> <span class="nav-text">1.3.1 普通查询结果集协议包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-2-预处理结果集协议包"><span class="nav-number">2.3.2.</span> <span class="nav-text">1.3.2 预处理结果集协议包</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-mysql-jdbc预处理"><span class="nav-number">3.</span> <span class="nav-text">2. mysql jdbc预处理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-jdbc客户端预处理"><span class="nav-number">3.1.</span> <span class="nav-text">2.1 jdbc客户端预处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-jdbc服务端预处理"><span class="nav-number">3.2.</span> <span class="nav-text">2.2 jdbc服务端预处理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-Mycat预处理实现机制"><span class="nav-number">4.</span> <span class="nav-text">3. Mycat预处理实现机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-预处理流程图"><span class="nav-number">4.1.</span> <span class="nav-text">3.1 预处理流程图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-预处理命令接收处理"><span class="nav-number">4.2.</span> <span class="nav-text">3.2 预处理命令接收处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-1-ServerPrepareHandler-prepare方法"><span class="nav-number">4.2.1.</span> <span class="nav-text">3.2.1 ServerPrepareHandler.prepare方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-1-ServerPrepareHandler-execute方法"><span class="nav-number">4.2.2.</span> <span class="nav-text">3.2.1 ServerPrepareHandler.execute方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-3-ServerPrepareHandler-close方法"><span class="nav-number">4.2.3.</span> <span class="nav-text">3.2.3 ServerPrepareHandler.close方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-5-后端返回数据的处理"><span class="nav-number">4.3.</span> <span class="nav-text">3.5 后端返回数据的处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-4-预处理结果集包封装"><span class="nav-number">4.4.</span> <span class="nav-text">3.4 预处理结果集包封装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-5-预处理结果集包转换为普通结果集协议包"><span class="nav-number">4.5.</span> <span class="nav-text">3.5 预处理结果集包转换为普通结果集协议包</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-写在最后"><span class="nav-number">5.</span> <span class="nav-text">4. 写在最后</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

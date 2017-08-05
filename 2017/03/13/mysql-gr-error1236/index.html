@@ -1,0 +1,729 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="MySQL," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="问题产生的场景原先配置了MGR集群，从节点退出集群(stop group_replication)，隔了很长一段时间想要加进来，这段时间内，主节点进行很多操作，并且之前的binlog被purged掉
+问题产生原因分析MGR主节点的binary log被删除掉(purge或者定期删除掉，人为地在硬盘上执行rm删除不在此考虑范围), MGR从节点无法读取到这些binary log, 尝试多次recov">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL Group Replication Got fatal error 1236">
+<meta property="og:url" content="http://yoursite.com/2017/03/13/mysql-gr-error1236/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="问题产生的场景原先配置了MGR集群，从节点退出集群(stop group_replication)，隔了很长一段时间想要加进来，这段时间内，主节点进行很多操作，并且之前的binlog被purged掉
+问题产生原因分析MGR主节点的binary log被删除掉(purge或者定期删除掉，人为地在硬盘上执行rm删除不在此考虑范围), MGR从节点无法读取到这些binary log, 尝试多次recov">
+<meta property="og:updated_time" content="2017-08-05T07:08:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL Group Replication Got fatal error 1236">
+<meta name="twitter:description" content="问题产生的场景原先配置了MGR集群，从节点退出集群(stop group_replication)，隔了很长一段时间想要加进来，这段时间内，主节点进行很多操作，并且之前的binlog被purged掉
+问题产生原因分析MGR主节点的binary log被删除掉(purge或者定期删除掉，人为地在硬盘上执行rm删除不在此考虑范围), MGR从节点无法读取到这些binary log, 尝试多次recov">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/03/13/mysql-gr-error1236/"/>
+
+
+
+
+
+  <title> MySQL Group Replication Got fatal error 1236 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/13/mysql-gr-error1236/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MySQL Group Replication Got fatal error 1236
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-13T00:00:00+08:00">
+                2017-03-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL.GR</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="问题产生的场景"><a href="#问题产生的场景" class="headerlink" title="问题产生的场景"></a>问题产生的场景</h2><p>原先配置了MGR集群，从节点退出集群(stop group_replication)，隔了很长一段时间想要加进来，这段时间内，主节点进行很多操作，并且之前的binlog被purged掉</p>
+<h2 id="问题产生原因分析"><a href="#问题产生原因分析" class="headerlink" title="问题产生原因分析"></a>问题产生原因分析</h2><p>MGR主节点的binary log被删除掉(purge或者定期删除掉，人为地在硬盘上执行rm删除不在此考虑范围), MGR从节点无法读取到这些binary log, 尝试多次recovery(找donor进行recovery)后失败，从replication group中退出，从节点的报错信息大致如下所示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2017-03-13T10:00:26.358681+08:00 355 [ERROR] Error reading packet from server for channel &apos;group_replication_recovery&apos;: The slave is connecting using CHANGE MASTER TO MASTER_AUTO_POSITION = 1, but the master has purged binary logs containing GTIDs that the slave requires. (server_errno=1236)</div><div class="line">2017-03-13T10:00:26.358720+08:00 355 [ERROR] Slave I/O for channel &apos;group_replication_recovery&apos;: Got fatal error 1236 from master when reading data from binary log: &apos;The slave is connecting using CHANGE MASTER TO MASTER_AUTO_POSITION = 1, but the master has purged binary logs containing GTIDs that the slave requires.&apos;, Error_code: 1236</div><div class="line">...</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="解决思路"><a href="#解决思路" class="headerlink" title="解决思路"></a>解决思路</h2><p>从MGR主节点利用mysqldump dump出数据，包括gtid_purged，在从节点上应用</p>
+<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysqldump --all-databases --set-gtid-purged=ON --single-transaction -uroot -S&quot;/mysql_data/data/mgrtest1/mysql_mgrtest1.sock&quot; -P24801 -p &gt; /mysql_data/data/mgrtest1_alldb.sql</div></pre></td></tr></table></figure>
+<p>输入密码回车后，提示:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Warning: A partial dump from a server that has GTIDs will by default include the GTIDs of all transactions, even those that changed suppressed parts of the database. If you don&apos;t want to restore GTIDs, pass --set-gtid-purged=OFF. To make a complete dump, pass --all-databases --triggers --routines --events. </div><div class="line">mysqldump: Couldn&apos;t execute &apos;SAVEPOINT sp&apos;: The MySQL server is running with the --transaction-write-set-extraction!=OFF option so it cannot execute this statement (1290)</div></pre></td></tr></table></figure></p>
+<p>关联到mysql bug: <a href="https://bugs.mysql.com/bug.php?id=81494" target="_blank" rel="external">https://bugs.mysql.com/bug.php?id=81494</a></p>
+<p>根据提示信息，当节点运行在group replication模式下，不支持savepoint，而mysqldump中需要dump出这条语句，然后dump出set @@gitd_purged=XXX 这个语句</p>
+<p>根据mysql bug链接提供的解决步骤，在主节点上执行:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">mysql&gt; set global transaction_write_set_extraction=OFF;</div><div class="line">ERROR 3093 (HY000): The write set algorithm cannot be changed when Group replication is running.</div></pre></td></tr></table></figure>
+<p>主节点需要关闭group_replication(此时如果有其他ONLINE从节点，选择其他ONLINE节点进行mysqldump应该是更好的选择)</p>
+<blockquote>
+<p>若stop的是主节点，请确保其他ONLINE从节点是否需要提前从集群中解除，如果需要，先stop所有从节点，再stop主节点</p>
+</blockquote>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">mysql&gt; stop group_replication;</div><div class="line">Query OK, 0 rows affected (8.74 sec)</div><div class="line"></div><div class="line">mysql&gt; set global transaction_write_set_extraction=OFF;</div><div class="line">Query OK, 0 rows affected (0.00 sec)</div></pre></td></tr></table></figure>
+<p>再次执行mysqldump命令即可成功dump出数据</p>
+<p>将dump出来的文件拷贝到从节点所在机器，登陆从节点，执行:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">reset master;</div><div class="line">source $&#123;your_sql_file&#125;</div></pre></td></tr></table></figure>
+<p>恢复主节点:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">mysql&gt; set global transaction_write_set_extraction=XXHASH64;</div><div class="line">Query OK, 0 rows affected (0.00 sec)</div><div class="line"></div><div class="line">mysql&gt; SET GLOBAL group_replication_bootstrap_group=ON;</div><div class="line">Query OK, 0 rows affected (0.01 sec)</div><div class="line"></div><div class="line">mysql&gt; START GROUP_REPLICATION;</div><div class="line">Query OK, 0 rows affected (1.06 sec)</div><div class="line"></div><div class="line">mysql&gt; SET GLOBAL group_replication_bootstrap_group=OFF;</div><div class="line">Query OK, 0 rows affected (0.00 sec)</div></pre></td></tr></table></figure>
+<p>最后，在从节点上执行:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">start</span> group_replication;</div></pre></td></tr></table></figure>
+<p>到这里从节点应该能够正常加入了</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>引用 <a href="http://lefred.be/content/mysql-group-replication-limitations-savepoints/，评论部分如下描述" target="_blank" rel="external">http://lefred.be/content/mysql-group-replication-limitations-savepoints/，评论部分如下描述</a> ：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">Savepoints are also used when executing mysqldump with –single-transaction option.</div><div class="line">http://dev.mysql.com/doc/refman/5.7/en/mysqldump.html#option_mysqldump_single-transaction</div><div class="line"></div><div class="line">That means if you want to do a consistent non blocking mysqldump on a node of the group you need to put the node out of the cluster first.</div><div class="line"></div><div class="line">e.g.</div><div class="line">mysql&gt; — Put the node out of the Group Replication cluster</div><div class="line">mysql&gt; STOP group_replication;</div><div class="line">mysql&gt; SET GLOBAL transaction_write_set_extraction=OFF;</div><div class="line"></div><div class="line">$ # Dump the entire node (instance)</div><div class="line">$ mysqldump –all-databases –triggers –routines –events –single-transaction &gt; /mysqldump/dump_YYYYMMDD.sql</div><div class="line"></div><div class="line">mysql&gt; — Bring back the node into the cluster</div><div class="line">mysql&gt; SET GLOBAL transaction_write_set_extraction=XXHASH64;</div><div class="line">mysql&gt; START group_replication;</div></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/05/mysql-gr-dynamic-add-member/" rel="next" title="MySQL Group Replication动态添加成员">
+                <i class="fa fa-chevron-left"></i> MySQL Group Replication动态添加成员
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/04/22/mysql-gr-node-state-introduction/" rel="prev" title="MySQL Group Replication 节点状态详解">
+                MySQL Group Replication 节点状态详解 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#问题产生的场景"><span class="nav-number">1.</span> <span class="nav-text">问题产生的场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题产生原因分析"><span class="nav-number">2.</span> <span class="nav-text">问题产生原因分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决思路"><span class="nav-number">3.</span> <span class="nav-text">解决思路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#解决步骤"><span class="nav-number">3.1.</span> <span class="nav-text">解决步骤</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

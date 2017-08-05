@@ -1,0 +1,790 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="MySQL," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="replication_group_members表通过查询performance_schema下的replication_group_members表可以知道MGR集群中节点的状态:
+1234567891011mysql&amp;gt; desc performance_schema.replication_group_members;+--------------+----------+------+">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL Group Replication 节点状态详解">
+<meta property="og:url" content="http://yoursite.com/2017/04/22/mysql-gr-node-state-introduction/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="replication_group_members表通过查询performance_schema下的replication_group_members表可以知道MGR集群中节点的状态:
+1234567891011mysql&amp;gt; desc performance_schema.replication_group_members;+--------------+----------+------+">
+<meta property="og:image" content="http://mysqlserverteam.com/wp-content/uploads/2016/12/MemberStates.png">
+<meta property="og:updated_time" content="2017-08-05T07:10:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL Group Replication 节点状态详解">
+<meta name="twitter:description" content="replication_group_members表通过查询performance_schema下的replication_group_members表可以知道MGR集群中节点的状态:
+1234567891011mysql&amp;gt; desc performance_schema.replication_group_members;+--------------+----------+------+">
+<meta name="twitter:image" content="http://mysqlserverteam.com/wp-content/uploads/2016/12/MemberStates.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/04/22/mysql-gr-node-state-introduction/"/>
+
+
+
+
+
+  <title> MySQL Group Replication 节点状态详解 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/04/22/mysql-gr-node-state-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MySQL Group Replication 节点状态详解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-22T00:00:00+08:00">
+                2017-04-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL.GR</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="replication-group-members表"><a href="#replication-group-members表" class="headerlink" title="replication_group_members表"></a>replication_group_members表</h2><p>通过查询performance_schema下的replication_group_members表可以知道MGR集群中节点的状态:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">mysql&gt; desc performance_schema.replication_group_members;</div><div class="line">+--------------+----------+------+-----+---------+-------+</div><div class="line">| Field        | Type     | Null | Key | Default | Extra |</div><div class="line">+--------------+----------+------+-----+---------+-------+</div><div class="line">| CHANNEL_NAME | char(64) | NO   |     | NULL    |       |</div><div class="line">| MEMBER_ID    | char(36) | NO   |     | NULL    |       |</div><div class="line">| MEMBER_HOST  | char(60) | NO   |     | NULL    |       |</div><div class="line">| MEMBER_PORT  | int(11)  | YES  |     | NULL    |       |</div><div class="line">| MEMBER_STATE | char(64) | NO   |     | NULL    |       |</div><div class="line">+--------------+----------+------+-----+---------+-------+</div><div class="line">5 rows in set (0.01 sec)</div></pre></td></tr></table></figure>
+<ul>
+<li><strong>CHANNEL_NAME</strong> : 显示的值永远为group_replication_applier</li>
+<li><strong>MEMBER_ID </strong>: 节点serer_uuid</li>
+<li><strong>MEMBER_PORT</strong> : 节点服务端口，取值为server_port指定的端口</li>
+<li><strong>MEMBER_HOST</strong> : 如果没有配置report_host选项，那么取值为机器的hostname，可以通过report_host配置指定具体的IP</li>
+<li><strong>MEMBER_STATE</strong> : 节点状态，取值下一节讨论</li>
+</ul>
+<a id="more"></a>
+<h2 id="MEMBER-STATE取值"><a href="#MEMBER-STATE取值" class="headerlink" title="MEMBER_STATE取值"></a>MEMBER_STATE取值</h2><p>MEMBER_STATE字段显示当前节点的状态，根据官方文档，取值和介绍如下所示:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">取值</th>
+<th style="text-align:left">解释</th>
+<th style="text-align:left">状态是否在集群内同步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">ONLINE</td>
+<td style="text-align:left">表示该节点可正常提供服务</td>
+<td style="text-align:left">YES</td>
+</tr>
+<tr>
+<td style="text-align:left">RECOVERING</td>
+<td style="text-align:left">表示当前节点正在从其他节点恢复数据</td>
+<td style="text-align:left">YES</td>
+</tr>
+<tr>
+<td style="text-align:left">OFFLINE</td>
+<td style="text-align:left">表示GR插件已经加载，但是该节点不属于任何一个GR组</td>
+<td style="text-align:left">NO</td>
+</tr>
+<tr>
+<td style="text-align:left">ERROR</td>
+<td style="text-align:left">表示节点在recovery阶段出现错误或者从其他节点同步状态中出现错误</td>
+<td style="text-align:left">NO</td>
+</tr>
+<tr>
+<td style="text-align:left">UNREACHABLE</td>
+<td style="text-align:left">节点处于不可达状态，无法与之发生网络通讯</td>
+<td style="text-align:left">NO</td>
+</tr>
+</tbody>
+</table>
+<p>从上表可以知道，只有ONLINE和RECOVERING两种状态会在集群中得到同步。这个状态同步是指状态在所有节点上面查询均能保持一致的意思。至于OFFLINE，ERROR和UNREABLE，做以下说明:</p>
+<ul>
+<li>只有在当前OFFLINE节点查询replication_group_members表才能得到OFFLINE状态，在其他节点上查询replication_group_members表，则一般没有该节点的状态（很好理解，因为OFFLINE节点已经不属于这个GR组了）</li>
+<li>只有在当前ERROR节点查询replication_group_members表才能得到ERROR状态，同上面的OFFLINE，在其他节点上查询也看不到该节点</li>
+<li>假设节点A与B网络通讯失败，那么在节点A上查询replication_group_members表，有可能得到B的状态为UNREACHABLE</li>
+</ul>
+<p>那么，从状态是否自身可见或者其他节点可见的角度来区分，有如下区分，</p>
+<p>状态对自身可见的有:</p>
+<ul>
+<li>ONLINE</li>
+<li>OFFLINE</li>
+<li>RECOVERING</li>
+<li>ERROR</li>
+</ul>
+<p>状态在其他节点上可见的有:</p>
+<ul>
+<li>ONLINE</li>
+<li>RECOVERING</li>
+<li>UNREACHABLE</li>
+</ul>
+<h2 id="节点状态转移"><a href="#节点状态转移" class="headerlink" title="节点状态转移"></a>节点状态转移</h2><p><img src="http://mysqlserverteam.com/wp-content/uploads/2016/12/MemberStates.png" alt="Group Replication Member State"></p>
+<p>当一个节点加进一个GR组，其状态首先变成RECOVERING，表示当前节点正处于集群恢复阶段，这个阶段下，节点会选择集群中一个节点(donor节点)，利用传统的异步复制，做recovery。当数据能够成功追平，节点的状态将会变成ONLINE，这个过程中通过其他节点也可以看到该节点的状态，不管是RECOVERING还是最后的ONLINE。</p>
+<p>假如该节点在RECOVERING阶段出现了异常(选donor进行复制失败 or 在donor追数据的过程中失败），那么该节点的状态将会变成ERROR，注意，这时候在其他节点上查询时，发现该RECOVERING节点已经从组里面被踢出。</p>
+<p>另外，如果一个ONLINE节点失去与其他节点的通讯（可能因为节点crash或者网络异常），则该节点在其他节点上面查询到的状态将会是UNREACHABLE。如果这个UNREACHABLE节点在规定的超时时间内没有恢复过来，那么节点将会被踢出去。这个规定的超时时间是多少呢？下面会讲这个时间在集群失去这个节点是否可用的条件下是不一样的。</p>
+<h2 id="可疑的UNREACHABLE状态"><a href="#可疑的UNREACHABLE状态" class="headerlink" title="可疑的UNREACHABLE状态"></a>可疑的UNREACHABLE状态</h2><p>前面提到，UNREACHABLE节点在规定的超时时间内如果没有恢复过来，那么节点将会被踢出去。这个规定的超时时间，取决于你集群失去这个节点下还是不是达到可用状态（之前的文章里面强调的2N + 1）。假设失去这个节点，集群仍然可用，那么这个UNREACHABLE的超时时间很短，几乎看不到这个状态；但是，如果失去这个节点后集群马上不可用，那么这个UNREACHABLE节点的超时时间，近似于无线大，将会一直处于UNREACHABLE!</p>
+<p>以一个例子来验证:</p>
+<p>3节点组成的集群，最开始3个节点均为ONLINE状态:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from performance_schema.replication_group_members;</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST   | MEMBER_PORT | MEMBER_STATE |</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">| group_replication_applier | 748703ac-dbcc-11e6-a668-90e2bac5d924 | 10.202.44.215 |       24801 | ONLINE       |</div><div class="line">| group_replication_applier | 8f8bc352-2566-11e7-aa5e-d4ae52ab91b3 | 10.202.44.214 |       24801 | ONLINE       |</div><div class="line">| group_replication_applier | 9c09340a-e04c-11e6-9916-0024e869a606 | 10.202.44.213 |       24801 | ONLINE       |</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">3 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>这时候，kill（注意是kill实例而不是正常down实例）掉其中的一个实例（10.202.44.214），通过其他可用节点查询到，那一个kill掉的实例从集群中被踢走了:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from performance_schema.replication_group_members;</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST   | MEMBER_PORT | MEMBER_STATE |</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">| group_replication_applier | 748703ac-dbcc-11e6-a668-90e2bac5d924 | 10.202.44.215 |       24801 | ONLINE       |</div><div class="line">| group_replication_applier | 9c09340a-e04c-11e6-9916-0024e869a606 | 10.202.44.213 |       24801 | ONLINE       |</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">2 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>接下来我们再kill掉一个实例（10.202.44.213）</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from performance_schema.replication_group_members;</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST   | MEMBER_PORT | MEMBER_STATE |</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">| group_replication_applier | 748703ac-dbcc-11e6-a668-90e2bac5d924 | 10.202.44.215 |       24801 | ONLINE       |</div><div class="line">| group_replication_applier | 9c09340a-e04c-11e6-9916-0024e869a606 | 10.202.44.213 |       24801 | UNREACHABLE  |</div><div class="line">+---------------------------+--------------------------------------+---------------+-------------+--------------+</div><div class="line">2 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>这个时候，UNREACHABLE状态将一直持续，而且此时，集群不满足2N + 1，集群已经不可用（即使有主节点，主节点也是不可写的）。恢复主节点可写有两种方式:</p>
+<ul>
+<li>把前面kill掉的一个节点拉起来，加入GR组里面</li>
+<li>暴力地使用group_replication_force_members参数，强制设置节点组成一个新的GR组（强制剔除UNRECHABLE节点）</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/03/13/mysql-gr-error1236/" rel="next" title="MySQL Group Replication Got fatal error 1236">
+                <i class="fa fa-chevron-left"></i> MySQL Group Replication Got fatal error 1236
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/06/mysql-gr-sync-or-async/" rel="prev" title="MySQL Group Replication 同步 or 异步?">
+                MySQL Group Replication 同步 or 异步? <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#replication-group-members表"><span class="nav-number">1.</span> <span class="nav-text">replication_group_members表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MEMBER-STATE取值"><span class="nav-number">2.</span> <span class="nav-text">MEMBER_STATE取值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#节点状态转移"><span class="nav-number">3.</span> <span class="nav-text">节点状态转移</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可疑的UNREACHABLE状态"><span class="nav-number">4.</span> <span class="nav-text">可疑的UNREACHABLE状态</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

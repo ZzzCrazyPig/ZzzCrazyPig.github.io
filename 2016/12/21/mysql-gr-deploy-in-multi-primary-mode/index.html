@@ -1,0 +1,832 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="MySQL," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="这篇文章记录如何部署mysql group replication 多写模式 (multi-primary mode)
+single-primary mode的部署参考另外一篇文章: 
+http://blog.csdn.net/d6619309/article/details/53786995">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL Group Replication 搭建[Multi-Primary Mode]">
+<meta property="og:url" content="http://yoursite.com/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="这篇文章记录如何部署mysql group replication 多写模式 (multi-primary mode)
+single-primary mode的部署参考另外一篇文章: 
+http://blog.csdn.net/d6619309/article/details/53786995">
+<meta property="og:updated_time" content="2017-08-05T07:03:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL Group Replication 搭建[Multi-Primary Mode]">
+<meta name="twitter:description" content="这篇文章记录如何部署mysql group replication 多写模式 (multi-primary mode)
+single-primary mode的部署参考另外一篇文章: 
+http://blog.csdn.net/d6619309/article/details/53786995">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/"/>
+
+
+
+
+
+  <title> MySQL Group Replication 搭建[Multi-Primary Mode] | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MySQL Group Replication 搭建[Multi-Primary Mode]
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-21T00:00:00+08:00">
+                2016-12-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL-GR/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL.GR</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这篇文章记录如何部署mysql group replication 多写模式 (multi-primary mode)</p>
+<p>single-primary mode的部署参考另外一篇文章: </p>
+<p><a href="http://blog.csdn.net/d6619309/article/details/53786995" target="_blank" rel="external">http://blog.csdn.net/d6619309/article/details/53786995</a></p>
+<a id="more"></a>
+<h1 id="1-环境准备"><a href="#1-环境准备" class="headerlink" title="1. 环境准备"></a>1. 环境准备</h1><ul>
+<li>CentOS5.6</li>
+<li>mysql-5.7.17-linux-glibc2.5-x86_64.tar.gz</li>
+</ul>
+<h1 id="2-部署"><a href="#2-部署" class="headerlink" title="2. 部署"></a>2. 部署</h1><p>我们的目标是在一台机器上安装3个mysql实例，然后配置mysql group replication，模式为multi-primary mode</p>
+<p>安装目录说明如下:</p>
+<p>1) 实例数据将安装在</p>
+<ul>
+<li>s1: <code>/dba/mysql/data/s1</code></li>
+<li>s2: <code>/dba/mysql/data/s2</code></li>
+<li>s3: <code>/dba/mysql/data/s3</code></li>
+</ul>
+<p>2) mysql5.7解压到</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/dba/mysql/mysql-5.7</div></pre></td></tr></table></figure>
+<h2 id="2-1-安装多实例-s1、s2、s3"><a href="#2-1-安装多实例-s1、s2、s3" class="headerlink" title="2.1 安装多实例(s1、s2、s3)"></a>2.1 安装多实例(s1、s2、s3)</h2><p>出于试验和测试的考虑，我们直接用编译好的mysql安装包进行精简安装:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cd</span> /dba/mysql</div><div class="line">mkdir data</div><div class="line">mysql-5.7/bin/mysqld --initialize-insecure --basedir=<span class="variable">$PWD</span>/mysql-5.7 --datadir=<span class="variable">$PWD</span>/data/s1</div><div class="line">mysql-5.7/bin/mysqld --initialize-insecure --basedir=<span class="variable">$PWD</span>/mysql-5.7 --datadir=<span class="variable">$PWD</span>/data/s2</div><div class="line">mysql-5.7/bin/mysqld --initialize-insecure --basedir=<span class="variable">$PWD</span>/mysql-5.7 --datadir=<span class="variable">$PWD</span>/data/s3</div></pre></td></tr></table></figure>
+<h2 id="2-2-s1实例部署"><a href="#2-2-s1实例部署" class="headerlink" title="2.2 s1实例部署"></a>2.2 s1实例部署</h2><h3 id="2-2-1-配置实例"><a href="#2-2-1-配置实例" class="headerlink" title="2.2.1 配置实例"></a>2.2.1 配置实例</h3><p>主要工作是配置my.cnf：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cd</span> <span class="variable">$PWD</span>/data/s1</div><div class="line">touch s1.cnf</div><div class="line">vi s1.cnf</div></pre></td></tr></table></figure>
+<ul>
+<li><strong>加入主配置</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">[mysqld]</div><div class="line"></div><div class="line"># server configuration</div><div class="line">datadir=/dba/mysql/data/s1</div><div class="line">basedir=/dba/mysql/mysql-5.7/</div><div class="line"></div><div class="line">port=24801</div><div class="line">socket=/dba/mysql/data/s1/s1.sock</div></pre></td></tr></table></figure>
+<ul>
+<li><strong>加入replication配置</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">server_id=1</div><div class="line">gtid_mode=ON</div><div class="line">enforce_gtid_consistency=ON</div><div class="line">master_info_repository=TABLE</div><div class="line">relay_log_info_repository=TABLE</div><div class="line">binlog_checksum=NONE</div><div class="line">log_slave_updates=ON</div><div class="line">log_bin=binlog</div><div class="line">binlog_format=ROW</div></pre></td></tr></table></figure>
+<p>其中大部分配置是为了打开group replication必须配置的，详见:</p>
+<p><a href="http://mysqlhighavailability.com/mysqlha/gr/doc/limitations.html" target="_blank" rel="external">http://mysqlhighavailability.com/mysqlha/gr/doc/limitations.html</a></p>
+<ul>
+<li><strong>加入group replication配置</strong></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">transaction_write_set_extraction=XXHASH64</div><div class="line">loose-group_replication_group_name=&quot;aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&quot;</div><div class="line">loose-group_replication_start_on_boot=off</div><div class="line">loose-group_replication_local_address= &quot;127.0.0.1:24901&quot;</div><div class="line">loose-group_replication_group_seeds= &quot;127.0.0.1:24901,127.0.0.1:24902,127.0.0.1:24903&quot;</div><div class="line">loose-group_replication_bootstrap_group= off</div><div class="line">loose-group_replication_single_primary_mode=FALSE</div><div class="line">loose-group_replication_enforce_update_everywhere_checks= TRUE</div></pre></td></tr></table></figure>
+<p>配置解释见: </p>
+<p><a href="http://mysqlhighavailability.com/mysqlha/gr/doc/getting_started.html#group-replication" target="_blank" rel="external">http://mysqlhighavailability.com/mysqlha/gr/doc/getting_started.html#group-replication</a></p>
+<h3 id="2-2-2-启动实例"><a href="#2-2-2-启动实例" class="headerlink" title="2.2.2 启动实例"></a>2.2.2 启动实例</h3><p>执行以下命令启动s1实例:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nohup mysql-5.7/bin/mysqld --defaults-file=data/s1/s1.cnf &gt;data/s1/nohup.out 2&gt;data/s1/nohup.out &amp;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>注意mysql用户必须拥有对data目录下的读写权限</p>
+</blockquote>
+<h3 id="2-2-3-用户授权"><a href="#2-2-3-用户授权" class="headerlink" title="2.2.3 用户授权"></a>2.2.3 用户授权</h3><p>成功启动之后，登陆mysql:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql -uroot -h127.0.0.1 -P24801 --skip-password</div></pre></td></tr></table></figure>
+<p>登陆之后建议修改root登陆密码，通过以下语句修改:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">0</span>;</div><div class="line"><span class="keyword">ALTER</span> <span class="keyword">USER</span> <span class="string">'root'</span>@<span class="string">'localhost'</span> <span class="keyword">IDENTIFIED</span> <span class="keyword">BY</span> <span class="string">'mysql'</span>;</div><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">1</span>;</div></pre></td></tr></table></figure>
+<p>mysql命令行下创建group replication所需要的用户:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">0</span>;</div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">USER</span> rpl_user@<span class="string">'%'</span>;</div><div class="line"><span class="keyword">GRANT</span> <span class="keyword">REPLICATION</span> <span class="keyword">SLAVE</span> <span class="keyword">ON</span> *.* <span class="keyword">TO</span> rpl_user@<span class="string">'%'</span> <span class="keyword">IDENTIFIED</span> <span class="keyword">BY</span> <span class="string">'rpl_pass'</span>;</div><div class="line"><span class="keyword">FLUSH</span> <span class="keyword">PRIVILEGES</span>;</div><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">1</span>;</div><div class="line"><span class="keyword">CHANGE</span> <span class="keyword">MASTER</span> <span class="keyword">TO</span> MASTER_USER=<span class="string">'rpl_user'</span>, MASTER_PASSWORD=<span class="string">'rpl_pass'</span> <span class="keyword">FOR</span> CHANNEL <span class="string">'group_replication_recovery'</span>;</div></pre></td></tr></table></figure>
+<h3 id="2-2-4-开启组复制"><a href="#2-2-4-开启组复制" class="headerlink" title="2.2.4 开启组复制"></a>2.2.4 开启组复制</h3><p>mysql命令行下执行:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; INSTALL PLUGIN group_replication SONAME 'group_replication.so';</div></pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">mysql&gt; SHOW PLUGINS;</div><div class="line">+----------------------------+----------+--------------------+----------------------+-------------+</div><div class="line">| Name                       | Status   | Type               | Library              | License     |</div><div class="line">+----------------------------+----------+--------------------+----------------------+-------------+</div><div class="line">| binlog                     | ACTIVE   | STORAGE ENGINE     | NULL                 | PROPRIETARY |</div><div class="line"></div><div class="line">(...)</div><div class="line"></div><div class="line">| group_replication          | ACTIVE   | GROUP REPLICATION  | group_replication.so | PROPRIETARY |</div><div class="line">+----------------------------+----------+--------------------+----------------------+-------------+</div></pre></td></tr></table></figure>
+<p>看到group_replication确保安装插件成功</p>
+<p>接下来执行下面的语句，启动group replication:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> <span class="keyword">GLOBAL</span> group_replication_bootstrap_group=<span class="keyword">ON</span>;</div><div class="line"><span class="keyword">START</span> GROUP_REPLICATION;</div><div class="line"><span class="keyword">SET</span> <span class="keyword">GLOBAL</span> group_replication_bootstrap_group=<span class="keyword">OFF</span>;</div></pre></td></tr></table></figure>
+<p>执行下面的语句，验证group replication已经成功启动:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">mysql&gt; SELECT * FROM performance_schema.replication_group_members;</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE |</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">| group_replication_applier | 3c992270-c282-11e6-93bf-fa163ee40410 | $&#123;yourhostname&#125;  |       24801 | ONLINE       |</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>接下来创建测试用的库和表:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">mysql&gt; CREATE DATABASE test;</div><div class="line">Query OK, 1 row affected (0,00 sec)</div><div class="line"></div><div class="line">mysql&gt; use test</div><div class="line">Database changed</div><div class="line">mysql&gt; CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 TEXT NOT NULL);</div><div class="line">Query OK, 0 rows affected (0,00 sec)</div><div class="line"></div><div class="line">mysql&gt; INSERT INTO t1 VALUES (1, 'Luis');</div><div class="line">Query OK, 1 row affected (0,01 sec)</div><div class="line"></div><div class="line">mysql&gt; SELECT * FROM t1;</div><div class="line">+----+------+</div><div class="line">| c1 | c2   |</div><div class="line">+----+------+</div><div class="line">|  1 | Luis |</div><div class="line">+----+------+</div><div class="line">1 row in set (0,00 sec)</div><div class="line"></div><div class="line">mysql&gt; show binlog events;</div><div class="line">+---------------+------+----------------+-----------+-------------+----------------------------------------------------------------------------------------------------------------------+</div><div class="line">| Log_name      | Pos  | Event_type     | Server_id | End_log_pos | Info                                                                                                                 |</div><div class="line">+---------------+------+----------------+-----------+-------------+----------------------------------------------------------------------------------------------------------------------+</div><div class="line">| binlog.000001 |    4 | Format_desc    |         1 |         123 | Server ver: 5.7.17-log, Binlog ver: 4                                                                                |</div><div class="line">| binlog.000001 |  123 | Previous_gtids |         1 |         150 |                                                                                                                      |</div><div class="line">| binlog.000001 |  150 | Gtid           |         1 |         211 | SET @@SESSION.GTID_NEXT= '3c992270-c282-11e6-93bf-fa163ee40410:1'                                                    |</div><div class="line">| binlog.000001 |  211 | Query          |         1 |         386 | ALTER USER 'root'@'localhost' IDENTIFIED WITH 'mysql_native_password' AS '*E74858DB86EBA20BC33D0AECAE8A8108C56B17FA' |</div><div class="line">| binlog.000001 |  386 | Gtid           |         1 |         447 | SET @@SESSION.GTID_NEXT= 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa:1'                                                    |</div><div class="line">| binlog.000001 |  447 | Query          |         1 |         506 | BEGIN                                                                                                                |</div><div class="line">| binlog.000001 |  506 | View_change    |         1 |         645 | view_id=14817781596395401:1                                                                                          |</div><div class="line">| binlog.000001 |  645 | Query          |         1 |         710 | COMMIT                                                                                                               |</div><div class="line">| binlog.000001 |  710 | Gtid           |         1 |         771 | SET @@SESSION.GTID_NEXT= 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa:2'                                                    |</div><div class="line">| binlog.000001 |  771 | Query          |         1 |         861 | CREATE DATABASE test                                                                                                 |</div><div class="line">| binlog.000001 |  861 | Gtid           |         1 |         922 | SET @@SESSION.GTID_NEXT= 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa:3'                                                    |</div><div class="line">| binlog.000001 |  922 | Query          |         1 |        1046 | use `test`; CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 TEXT NOT NULL)                                                   |</div><div class="line">| binlog.000001 | 1046 | Gtid           |         1 |        1107 | SET @@SESSION.GTID_NEXT= 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa:4'                                                    |</div><div class="line">| binlog.000001 | 1107 | Query          |         1 |        1175 | BEGIN                                                                                                                |</div><div class="line">| binlog.000001 | 1175 | Table_map      |         1 |        1218 | table_id: 219 (test.t1)                                                                                              |</div><div class="line">| binlog.000001 | 1218 | Write_rows     |         1 |        1260 | table_id: 219 flags: STMT_END_F                                                                                      |</div><div class="line">| binlog.000001 | 1260 | Xid            |         1 |        1287 | COMMIT /* xid=47 */                                                                                                  |</div><div class="line">+---------------+------+----------------+-----------+-------------+----------------------------------------------------------------------------------------------------------------------+</div><div class="line">17 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<h2 id="2-3-增加新成员s2"><a href="#2-3-增加新成员s2" class="headerlink" title="2.3 增加新成员s2"></a>2.3 增加新成员s2</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cd data/s2</div><div class="line">touch s2.cnf</div><div class="line">vi s2.cnf</div></pre></td></tr></table></figure>
+<p>与配置s1实例类似，增加s2.cnf并写入如下配置:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">[mysqld]</div><div class="line"></div><div class="line"># server configuration</div><div class="line">datadir=/dba/mysql/data/s2</div><div class="line">basedir=/dba/mysql/mysql-5.7/</div><div class="line"></div><div class="line">port=24802</div><div class="line">socket=/dba/mysql/data/s2/s2.sock</div><div class="line"></div><div class="line">#</div><div class="line"># Replication configuration parameters</div><div class="line">#</div><div class="line">server_id=2</div><div class="line">gtid_mode=ON</div><div class="line">enforce_gtid_consistency=ON</div><div class="line">master_info_repository=TABLE</div><div class="line">relay_log_info_repository=TABLE</div><div class="line">binlog_checksum=NONE</div><div class="line">log_slave_updates=ON</div><div class="line">log_bin=binlog</div><div class="line">binlog_format=ROW</div><div class="line"></div><div class="line">#</div><div class="line"># Group Replication configuration</div><div class="line">#</div><div class="line">transaction_write_set_extraction=XXHASH64</div><div class="line">loose-group_replication_group_name=&quot;aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&quot;</div><div class="line">loose-group_replication_start_on_boot=off</div><div class="line">loose-group_replication_local_address= &quot;127.0.0.1:24902&quot;</div><div class="line">loose-group_replication_group_seeds= &quot;127.0.0.1:24901,127.0.0.1:24902,127.0.0.1:24903&quot;</div><div class="line">loose-group_replication_bootstrap_group= off</div><div class="line">loose-group_replication_single_primary_mode=FALSE</div><div class="line">loose-group_replication_enforce_update_everywhere_checks= TRUE</div></pre></td></tr></table></figure>
+<p>之后启动s2实例:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nohup mysql-5.7/bin/mysqld --defaults-file=data/s2/s2.cnf &gt;data/s2/nohup.out 2&gt;data/s2/nohup.out &amp;</div></pre></td></tr></table></figure>
+<p>修改用户密码:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">0</span>;</div><div class="line"><span class="keyword">ALTER</span> <span class="keyword">USER</span> <span class="string">'root'</span>@<span class="string">'localhost'</span> <span class="keyword">IDENTIFIED</span> <span class="keyword">BY</span> <span class="string">'mysql'</span>;</div><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">1</span>;</div></pre></td></tr></table></figure>
+<p>之后配置group replication需要的用户:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">0</span>;</div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">USER</span> rpl_user@<span class="string">'%'</span>;</div><div class="line"><span class="keyword">GRANT</span> <span class="keyword">REPLICATION</span> <span class="keyword">SLAVE</span> <span class="keyword">ON</span> *.* <span class="keyword">TO</span> rpl_user@<span class="string">'%'</span> <span class="keyword">IDENTIFIED</span> <span class="keyword">BY</span> <span class="string">'rpl_pass'</span>;</div><div class="line"><span class="keyword">FLUSH</span> <span class="keyword">PRIVILEGES</span>;</div><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">1</span>;</div><div class="line"><span class="keyword">CHANGE</span> <span class="keyword">MASTER</span> <span class="keyword">TO</span> MASTER_USER=<span class="string">'rpl_user'</span>, MASTER_PASSWORD=<span class="string">'rpl_pass'</span> <span class="keyword">FOR</span> CHANNEL <span class="string">'group_replication_recovery'</span>;</div></pre></td></tr></table></figure>
+<p>接下来安装group replication插件:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; INSTALL PLUGIN group_replication SONAME 'group_replication.so';</div></pre></td></tr></table></figure>
+<p>然后就可以把s2添加到当前group里面:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; START GROUP_REPLICATION;</div></pre></td></tr></table></figure>
+<hr>
+<p><strong>【注意】</strong> 前面的用户密码修改和创建用户操作必须设置binlog不记录，执行后再打开，否则会引起<code>START GROUP_REPLICATION</code>执行报错:</p>
+<p>报错信息如下:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ERROR 3092 (HY000): The server is not configured properly to be an active member of the group. Please see more details on error log.</div></pre></td></tr></table></figure>
+<p>mysql后台报错信息:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">2016-12-15T07:51:28.317816Z 0 [ERROR] Plugin group_replication reported: &apos;This member has more executed transactions than those present in the group. Local transactions: f16f7f74-c283-11e6-ae37-fa163ee40410:1 &gt; Group transactions: 3c992270-c282-11e6-93bf-fa163ee40410:1,</div><div class="line">aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa:1-5&apos;</div><div class="line">2016-12-15T07:51:28.317878Z 0 [ERROR] Plugin group_replication reported: &apos;The member contains transactions not present in the group. The member will now exit the group.&apos;</div><div class="line">2016-12-15T07:51:28.317887Z 0 [Note] Plugin group_replication reported: &apos;To force this member into the group you can use the group_replication_allow_local_disjoint_gtids_join option&apos;</div><div class="line">2016-12-15T07:51:28.317999Z 14 [Note] Plugin group_replication reported: &apos;Going to wait for view modification&apos;</div><div class="line">2016-12-15T07:51:28.318429Z 0 [Note] Plugin group_replication reported: &apos;getstart group_id 4317e324&apos;</div><div class="line">2016-12-15T07:51:32.437462Z 0 [Note] Plugin group_replication reported: &apos;state 4330 action xa_terminate&apos;</div><div class="line">2016-12-15T07:51:32.437897Z 0 [Note] Plugin group_replication reported: &apos;new state x_start&apos;</div><div class="line">2016-12-15T07:51:32.437913Z 0 [Note] Plugin group_replication reported: &apos;state 4257 action xa_exit&apos;</div><div class="line">2016-12-15T07:51:32.437981Z 0 [Note] Plugin group_replication reported: &apos;Exiting xcom thread&apos;</div><div class="line">2016-12-15T07:51:32.437993Z 0 [Note] Plugin group_replication reported: &apos;new state x_start&apos;</div><div class="line">2016-12-15T07:51:37.472364Z 14 [Note] Plugin group_replication reported: &apos;auto_increment_increment is reset to 1&apos;</div><div class="line">2016-12-15T07:51:37.472474Z 14 [Note] Plugin group_replication reported: &apos;auto_increment_offset is reset to 1&apos;</div><div class="line">2016-12-15T07:51:37.472943Z 19 [Note] Error reading relay log event for channel &apos;group_replication_applier&apos;: slave SQL thread was killed</div><div class="line">2016-12-15T07:51:37.485851Z 16 [Note] Plugin group_replication reported: &apos;The group replication applier thread was killed&apos;</div></pre></td></tr></table></figure>
+<p><strong>解决方案</strong>是：根据提示打开<code>group_replication_allow_local_disjoint_gtids_join</code>选项，mysql命令行执行:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; set global group_replication_allow_local_disjoint_gtids_join=ON;</div></pre></td></tr></table></figure>
+<p>然后再执行:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">mysql&gt; start group_replication;</div><div class="line">Query OK, 0 rows affected (7.89 sec)</div></pre></td></tr></table></figure>
+<hr>
+<p>执行成功，查询组成员信息:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">mysql&gt; SELECT * FROM performance_schema.replication_group_members;</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE |</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">| group_replication_applier | 3c992270-c282-11e6-93bf-fa163ee40410 | $&#123;yourhostname&#125;  |       24801 | ONLINE       |</div><div class="line">| group_replication_applier | f16f7f74-c283-11e6-ae37-fa163ee40410 | $&#123;yourhostname&#125;  |       24802 | ONLINE       |</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">2 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>看到实例s2已经加入当前group</p>
+<p>查看database发现<code>test</code>数据库和表<code>t1</code>已经被同步创建:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">mysql&gt; show databases;</div><div class="line">+--------------------+</div><div class="line">| Database           |</div><div class="line">+--------------------+</div><div class="line">| information_schema |</div><div class="line">| mysql              |</div><div class="line">| performance_schema |</div><div class="line">| sys                |</div><div class="line">| test               |</div><div class="line">+--------------------+</div><div class="line">5 rows in set (0.00 sec)</div><div class="line"></div><div class="line">mysql&gt; use test;</div><div class="line">Reading table information for completion of table and column names</div><div class="line">You can turn off this feature to get a quicker startup with -A</div><div class="line"></div><div class="line">Database changed</div><div class="line">mysql&gt; show tables;</div><div class="line">+----------------+</div><div class="line">| Tables_in_test |</div><div class="line">+----------------+</div><div class="line">| t1             |</div><div class="line">+----------------+</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>表t1的数据也被同步了:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from t1;</div><div class="line">+----+------+</div><div class="line">| c1 | c2   |</div><div class="line">+----+------+</div><div class="line">|  1 | Luis |</div><div class="line">+----+------+</div><div class="line">1 row in set (0.00 sec</div></pre></td></tr></table></figure>
+<h2 id="2-4-增加新实例s3"><a href="#2-4-增加新实例s3" class="headerlink" title="2.4 增加新实例s3"></a>2.4 增加新实例s3</h2><p>与增加s2实例类似，不赘述，直接看配置:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cd</span> data/s3</div><div class="line">touch s3.cnf</div><div class="line">vi s3.cnf</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">[mysqld]</div><div class="line"></div><div class="line"># server configuration</div><div class="line">datadir=/dba/mysql/data/s3</div><div class="line">basedir=/dba/mysql/mysql-5.7/</div><div class="line"></div><div class="line">port=24803</div><div class="line">socket=/dba/mysql/data/s3/s3.sock</div><div class="line"></div><div class="line">#</div><div class="line"># Replication configuration parameters</div><div class="line">#</div><div class="line">server_id=3</div><div class="line">gtid_mode=ON</div><div class="line">enforce_gtid_consistency=ON</div><div class="line">master_info_repository=TABLE</div><div class="line">relay_log_info_repository=TABLE</div><div class="line">binlog_checksum=NONE</div><div class="line">log_slave_updates=ON</div><div class="line">log_bin=binlog</div><div class="line">binlog_format=ROW</div><div class="line"></div><div class="line">#</div><div class="line"># Group Replication configuration</div><div class="line">#</div><div class="line">transaction_write_set_extraction=XXHASH64</div><div class="line">loose-group_replication_group_name=&quot;aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&quot;</div><div class="line">loose-group_replication_start_on_boot=off</div><div class="line">loose-group_replication_local_address= &quot;127.0.0.1:24903&quot;</div><div class="line">loose-group_replication_group_seeds= &quot;127.0.0.1:24901,127.0.0.1:24902,127.0.0.1:24903&quot;</div><div class="line">loose-group_replication_bootstrap_group= off</div><div class="line">loose-group_replication_single_primary_mode=FALSE</div><div class="line">loose-group_replication_enforce_update_everywhere_checks= TRUE</div></pre></td></tr></table></figure>
+<p>启动s3实例:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nohup mysql-5.7/bin/mysqld --defaults-file=data/s3/s3.cnf &gt;data/s3/nohup.out 2&gt;data/s3/nohup.out &amp;</div></pre></td></tr></table></figure>
+<p>登陆、修改密码后，执行:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">0</span>;</div><div class="line"><span class="keyword">ALTER</span> <span class="keyword">USER</span> <span class="string">'root'</span>@<span class="string">'localhost'</span> <span class="keyword">IDENTIFIED</span> <span class="keyword">BY</span> <span class="string">'mysql'</span>;</div><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">1</span>;</div></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">0</span>;</div><div class="line"><span class="keyword">CREATE</span> <span class="keyword">USER</span> rpl_user@<span class="string">'%'</span>;</div><div class="line"><span class="keyword">GRANT</span> <span class="keyword">REPLICATION</span> <span class="keyword">SLAVE</span> <span class="keyword">ON</span> *.* <span class="keyword">TO</span> rpl_user@<span class="string">'%'</span> <span class="keyword">IDENTIFIED</span> <span class="keyword">BY</span> <span class="string">'rpl_pass'</span>;</div><div class="line"><span class="keyword">FLUSH</span> <span class="keyword">PRIVILEGES</span>;</div><div class="line"><span class="keyword">SET</span> SQL_LOG_BIN=<span class="number">1</span>;</div><div class="line"><span class="keyword">CHANGE</span> <span class="keyword">MASTER</span> <span class="keyword">TO</span> MASTER_USER=<span class="string">'rpl_user'</span>, MASTER_PASSWORD=<span class="string">'rpl_pass'</span> <span class="keyword">FOR</span> CHANNEL <span class="string">'group_replication_recovery'</span>;</div></pre></td></tr></table></figure>
+<p>安装插件:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">INSTALL</span> <span class="keyword">PLUGIN</span> group_replication <span class="keyword">SONAME</span> <span class="string">'group_replication.so'</span>;</div></pre></td></tr></table></figure>
+<p>最后将s3加入group:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">START</span> GROUP_REPLICATION;</div></pre></td></tr></table></figure>
+<p>查看同步状态:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line">mysql&gt; SELECT * FROM performance_schema.replication_group_members;</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE |</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">| group_replication_applier | 3c992270-c282-11e6-93bf-fa163ee40410 | $&#123;yourhost&#125;  |       24801 | ONLINE       |</div><div class="line">| group_replication_applier | f16f7f74-c283-11e6-ae37-fa163ee40410 | $&#123;yourhost&#125;  |       24802 | ONLINE       |</div><div class="line">| group_replication_applier | f9b49bd8-c283-11e6-afb2-fa163ee40410 | $&#123;yourhost&#125;  |       24803 | ONLINE       |</div><div class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+</div><div class="line">3 rows in set (0.00 sec)</div><div class="line"></div><div class="line"></div><div class="line">mysql&gt; show databases;</div><div class="line">+--------------------+</div><div class="line">| Database           |</div><div class="line">+--------------------+</div><div class="line">| information_schema |</div><div class="line">| mysql              |</div><div class="line">| performance_schema |</div><div class="line">| sys                |</div><div class="line">| test               |</div><div class="line">+--------------------+</div><div class="line">5 rows in set (0.00 sec)</div><div class="line"></div><div class="line">mysql&gt; use test;</div><div class="line">Reading table information for completion of table and column names</div><div class="line">You can turn off this feature to get a quicker startup with -A</div><div class="line"></div><div class="line">Database changed</div><div class="line">mysql&gt; show tables;</div><div class="line">+----------------+</div><div class="line">| Tables_in_test |</div><div class="line">+----------------+</div><div class="line">| t1             |</div><div class="line">+----------------+</div><div class="line">1 row in set (0.00 sec)</div><div class="line"></div><div class="line">mysql&gt; select * from t1;</div><div class="line">+----+------+</div><div class="line">| c1 | c2   |</div><div class="line">+----+------+</div><div class="line">|  1 | Luis |</div><div class="line">+----+------+</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure>
+<p>这个时候已经完成了一个group replication multi primary mode的部署了。</p>
+<h1 id="3-简单测试"><a href="#3-简单测试" class="headerlink" title="3. 简单测试"></a>3. 简单测试</h1><p>我们测试一下在三个实例的t1表里面插入数据，然后查询group的同步情况:</p>
+<ul>
+<li>在s3上面执行:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; insert into t1(c1, c2) values(24803, 'insert value on s3');</div></pre></td></tr></table></figure>
+<p>在s1和s2上面查询，数据得到同步:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from t1;</div><div class="line">+-------+--------------------+</div><div class="line">| c1    | c2                 |</div><div class="line">+-------+--------------------+</div><div class="line">|     1 | Luis               |</div><div class="line">| 24803 | insert value on s3 |</div><div class="line">+-------+--------------------+</div><div class="line">2 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<ul>
+<li>在s2上面执行:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; insert into t1(c1,c2) values(24802, 'insert value on s2');</div></pre></td></tr></table></figure>
+<p>在s1和s3上面查询，数据得到同步:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from t1;</div><div class="line">+-------+--------------------+</div><div class="line">| c1    | c2                 |</div><div class="line">+-------+--------------------+</div><div class="line">|     1 | Luis               |</div><div class="line">| 24802 | insert value on s2 |</div><div class="line">| 24803 | insert value on s3 |</div><div class="line">+-------+--------------------+</div><div class="line">3 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<ul>
+<li>在s1上面执行:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql&gt; insert into t1(c1, c2) values(24801, 'insert value on s1');</div></pre></td></tr></table></figure>
+<p>在s2和s3上面查询，数据得到同步:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">mysql&gt; select * from t1;</div><div class="line">+-------+--------------------+</div><div class="line">| c1    | c2                 |</div><div class="line">+-------+--------------------+</div><div class="line">|     1 | Luis               |</div><div class="line">| 24801 | insert value on s1 |</div><div class="line">| 24802 | insert value on s2 |</div><div class="line">| 24803 | insert value on s3 |</div><div class="line">+-------+--------------------+</div><div class="line">4 rows in set (0.00 sec)</div></pre></td></tr></table></figure>
+<h1 id="4-参考"><a href="#4-参考" class="headerlink" title="4. 参考"></a>4. 参考</h1><p><a href="http://mysqlhighavailability.com/mysqlha/gr/doc/getting_started.html#deploying-a-group-with-three-servers-in-multi-master-mode" target="_blank" rel="external">http://mysqlhighavailability.com/mysqlha/gr/doc/getting_started.html#deploying-a-group-with-three-servers-in-multi-master-mode</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/20/mysql-gr-tech/" rel="next" title="MySQL Group Replication技术点">
+                <i class="fa fa-chevron-left"></i> MySQL Group Replication技术点
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/21/mysql-gr-deploy-in-single-primary-mode/" rel="prev" title="MySQL Group Replication搭建[Single-Primary Mode]">
+                MySQL Group Replication搭建[Single-Primary Mode] <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-环境准备"><span class="nav-number">1.</span> <span class="nav-text">1. 环境准备</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-部署"><span class="nav-number">2.</span> <span class="nav-text">2. 部署</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-安装多实例-s1、s2、s3"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 安装多实例(s1、s2、s3)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-s1实例部署"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 s1实例部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-1-配置实例"><span class="nav-number">2.2.1.</span> <span class="nav-text">2.2.1 配置实例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-2-启动实例"><span class="nav-number">2.2.2.</span> <span class="nav-text">2.2.2 启动实例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-3-用户授权"><span class="nav-number">2.2.3.</span> <span class="nav-text">2.2.3 用户授权</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-4-开启组复制"><span class="nav-number">2.2.4.</span> <span class="nav-text">2.2.4 开启组复制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-增加新成员s2"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 增加新成员s2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-4-增加新实例s3"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 增加新实例s3</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-简单测试"><span class="nav-number">3.</span> <span class="nav-text">3. 简单测试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-参考"><span class="nav-number">4.</span> <span class="nav-text">4. 参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

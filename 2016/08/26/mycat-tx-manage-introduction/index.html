@@ -1,0 +1,734 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Mycat," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="针对MyCat1.5版本，对MyCat的事务管理机制进行简要分析:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mycat事务管理分析">
+<meta property="og:url" content="http://yoursite.com/2016/08/26/mycat-tx-manage-introduction/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="针对MyCat1.5版本，对MyCat的事务管理机制进行简要分析:">
+<meta property="og:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-tx-manage-unstanding/mycat-tx-flow.jpg">
+<meta property="og:updated_time" content="2017-08-05T06:53:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mycat事务管理分析">
+<meta name="twitter:description" content="针对MyCat1.5版本，对MyCat的事务管理机制进行简要分析:">
+<meta name="twitter:image" content="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-tx-manage-unstanding/mycat-tx-flow.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/08/26/mycat-tx-manage-introduction/"/>
+
+
+
+
+
+  <title> Mycat事务管理分析 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/08/26/mycat-tx-manage-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Mycat事务管理分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-08-26T00:00:00+08:00">
+                2016-08-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mycat-源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Mycat.源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>针对MyCat1.5版本，对MyCat的事务管理机制进行简要分析:</p>
+<a id="more"></a>
+<h1 id="1-MyCat事务管理"><a href="#1-MyCat事务管理" class="headerlink" title="1.    MyCat事务管理"></a>1.    MyCat事务管理</h1><h2 id="1-1-事务开启"><a href="#1-1-事务开启" class="headerlink" title="1.1 事务开启"></a>1.1 事务开启</h2><p>MyCat默认执行SQL不开启事务，使用事务时需要显式地开启。目前支持set autocommit = 0 、 BEGIN 、START TRANSACTION 三种方式来开启事务。我们建议使用 set autocommit = 0来开启事务。</p>
+<p>MyCat的事务控制在会话级别，对应于MyCat源码里面的NonBlockingSession类。事务开启后，该会话所有后续的SQL执行都将进入事务，直到收到提交（commit）或者回滚（rollback）。</p>
+<h2 id="1-2-事务提交"><a href="#1-2-事务提交" class="headerlink" title="1.2 事务提交"></a>1.2 事务提交</h2><p>当MyCat收到客户端发出commit语句，表示需要执行事务的提交逻辑。当前MyCat实现的事务为弱XA事务（强XA事务还在研发当中）。</p>
+<h3 id="1-2-1-事务提交流程分析"><a href="#1-2-1-事务提交流程分析" class="headerlink" title="1.2.1    事务提交流程分析"></a>1.2.1    事务提交流程分析</h3><p><img src="http://7xtamf.com1.z0.glb.clouddn.com/image/blog/mycat-tx-manage-unstanding/mycat-tx-flow.jpg" alt="mycat-tx-flow"></p>
+<p>如上流程图所示，事务提交首先判断是否需要回滚，如果需要回滚，则不给用户提交。进入提交主流程，分为单节点路由和多节点路由来处理:</p>
+<ul>
+<li>对于路由到单节点的事务提交，无须考虑更多，直接发送commit命令包到对应的后端MySQL连接<ul>
+<li>对于路由到多节点的事务提交，需要细分如下处理流程:</li>
+<li>如果事务内处理的表都是全局表，那么跟单节点的处理一致，不需要考虑更多，直接发送commit命令包到对应的后端MySQL连接</li>
+</ul>
+</li>
+<li>如果事务内处理的表操作跨越多个分片，判断分布式事务是否被允许，如果不允许，中断事务并提示用户rollback；如果允许，则对于所有路由涉及到的后端连接，执行commit，在最终的OK包收到以后再通知用户commit成功。</li>
+</ul>
+<h3 id="1-2-2-事务提交代码"><a href="#1-2-2-事务提交代码" class="headerlink" title="1.2.2 事务提交代码"></a>1.2.2 事务提交代码</h3><p>ServerConnection类的commit方法为事务提交主要入口，判断是否需要回滚，不需要回滚则进入处理事务提交主流程:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">	 * 提交事务</div><div class="line">	 */</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">commit</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">if</span> (txInterrupted) &#123;</div><div class="line">			writeErrMessage(ErrorCode.ER_YES,</div><div class="line">					<span class="string">"Transaction error, need to rollback."</span>);</div><div class="line">		&#125; <span class="keyword">else</span> &#123;</div><div class="line">			session.commit();</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>事务提交主流程体现在NonBlockingSession类的commit方法里:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">commit</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">final</span> <span class="keyword">int</span> initCount = target.size();</div><div class="line">        <span class="keyword">if</span> (initCount &lt;= <span class="number">0</span>) &#123;</div><div class="line">            ByteBuffer buffer = source.allocate();</div><div class="line">            buffer = source.writeToBuffer(OkPacket.OK, buffer);</div><div class="line">            source.write(buffer);</div><div class="line">            <span class="keyword">return</span>;</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (initCount == <span class="number">1</span>) &#123;</div><div class="line">            BackendConnection con = target.elements().nextElement();</div><div class="line">            commitHandler.commit(con);</div><div class="line"></div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line"></div><div class="line">            <span class="keyword">if</span> (LOGGER.isDebugEnabled()) &#123;</div><div class="line">                LOGGER.debug(<span class="string">"multi node commit to send ,total "</span> + initCount);</div><div class="line">            &#125;</div><div class="line">            checkDistriTransaxAndExecute();</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>对于多节点事务提交的逻辑在checkDistriTransaxAndExecute方法里:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">checkDistriTransaxAndExecute</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span>(!isALLGlobal())&#123;</div><div class="line">            <span class="keyword">switch</span>(MycatServer.getInstance().getConfig().getSystem().getHandleDistributedTransactions()) &#123;</div><div class="line">                <span class="keyword">case</span> <span class="number">1</span>:</div><div class="line"><span class="comment">//                        rollback();</span></div><div class="line">                    source.writeErrMessage(ErrorCode.ER_NOT_ALLOWED_COMMAND, <span class="string">"Distributed transaction is disabled!Please rollback!"</span>);</div><div class="line">                    source.setTxInterrupt(<span class="string">"Distributed transaction is disabled!"</span>);</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                <span class="keyword">case</span> <span class="number">2</span>:</div><div class="line">                    multiNodeCoordinator.executeBatchNodeCmd(SQLCmdConstant.COMMIT_CMD);</div><div class="line">                    LOGGER.warn(<span class="string">"Distributed transaction detected! Targets:"</span> + target);</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                <span class="keyword">default</span>:</div><div class="line">                    multiNodeCoordinator.executeBatchNodeCmd(SQLCmdConstant.COMMIT_CMD);</div><div class="line">            &#125;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            multiNodeCoordinator.executeBatchNodeCmd(SQLCmdConstant.COMMIT_CMD);</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<h2 id="1-3-事务回滚"><a href="#1-3-事务回滚" class="headerlink" title="1.3 事务回滚"></a>1.3 事务回滚</h2><p>当MyCat收到客户端发出的rollback语句，表示需要执行事务的回滚逻辑。Rollback的流程处理较commit简单地多，主要逻辑为对于所有涉及到的路由节点，发送rollback命令包，并在发送完rollback命令包收到响应后，对于发送OK包给用户。回滚代码入口在ServerConnection的rollback方法里:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * 回滚事务</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">rollback</span><span class="params">()</span> </span>&#123;</div><div class="line">	<span class="comment">// 状态检查</span></div><div class="line">	<span class="keyword">if</span> (txInterrupted) &#123;</div><div class="line">		txInterrupted = <span class="keyword">false</span>;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="comment">// 执行回滚</span></div><div class="line">	session.rollback();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>与处理commit一样，将rollback逻辑封装到NonBlockingSession的rollback方法里面。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">rollback</span><span class="params">()</span> </span>&#123;</div><div class="line">       <span class="keyword">final</span> <span class="keyword">int</span> initCount = target.size();</div><div class="line">       <span class="keyword">if</span> (initCount &lt;= <span class="number">0</span>) &#123;</div><div class="line">           <span class="keyword">if</span> (LOGGER.isDebugEnabled()) &#123;</div><div class="line">               LOGGER.debug(<span class="string">"no session bound connections found ,no need send rollback cmd "</span>);</div><div class="line">           &#125;</div><div class="line">           ByteBuffer buffer = source.allocate();</div><div class="line">           buffer = source.writeToBuffer(OkPacket.OK, buffer);</div><div class="line">           source.write(buffer);</div><div class="line">           <span class="keyword">return</span>;</div><div class="line">       &#125;</div><div class="line"></div><div class="line">       rollbackHandler = <span class="keyword">new</span> RollbackNodeHandler(<span class="keyword">this</span>);</div><div class="line">       rollbackHandler.rollback();</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>最后交由RollBackNodeHandler去发送rollback命令包。</p>
+<h1 id="2-弱XA事务的优劣"><a href="#2-弱XA事务的优劣" class="headerlink" title="2.    弱XA事务的优劣"></a>2.    弱XA事务的优劣</h1><p>前面提到MyCat目前的分布式事务实现为弱XA事务，具有对应的优势和劣势:</p>
+<p>##　2.1 优势</p>
+<p>较强XA事务，不会产生更多的性能消耗。</p>
+<h2 id="2-2-劣势"><a href="#2-2-劣势" class="headerlink" title="2.2 劣势"></a>2.2 劣势</h2><p>无法保证强一致性（强XA事务可以保证），跨多个节点的提交，如果前面节点提交成功，后面节点提交失败，这个时候用户必须回滚，但是只能回滚那些提交失败节点上的操作，对于已经发送了commit的节点，无法进行回滚。
+　</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Mycat/" rel="tag"># Mycat</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/07/25/mycat-debug-env-build/" rel="next" title="Mycat源码调试环境搭建">
+                <i class="fa fa-chevron-left"></i> Mycat源码调试环境搭建
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/26/mycat-thread-model-introduction/" rel="prev" title="Mycat线程模型分析">
+                Mycat线程模型分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-MyCat事务管理"><span class="nav-number">1.</span> <span class="nav-text">1.    MyCat事务管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-事务开启"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 事务开启</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-事务提交"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 事务提交</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-1-事务提交流程分析"><span class="nav-number">1.2.1.</span> <span class="nav-text">1.2.1    事务提交流程分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-2-事务提交代码"><span class="nav-number">1.2.2.</span> <span class="nav-text">1.2.2 事务提交代码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-3-事务回滚"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 事务回滚</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-弱XA事务的优劣"><span class="nav-number">2.</span> <span class="nav-text">2.    弱XA事务的优劣</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-劣势"><span class="nav-number">2.1.</span> <span class="nav-text">2.2 劣势</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

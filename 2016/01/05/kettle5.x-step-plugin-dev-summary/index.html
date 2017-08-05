@@ -1,0 +1,763 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="kettle," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1. 前言Kettle允许我们自定义开发插件以支持实际项目中特殊的流程，关于Kettle插件体系的介绍可以参考链接：Kettle插件体系介绍。这篇文章主要是针对Step插件的开发总结，不涉及开发其他类型插件的介绍。注意Kettle版本为5.x和4.x的插件结构稍有不同，本文针对的Kettle版本为5.x版本。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kettle5.x步骤组件开发总结">
+<meta property="og:url" content="http://yoursite.com/2016/01/05/kettle5.x-step-plugin-dev-summary/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="1. 前言Kettle允许我们自定义开发插件以支持实际项目中特殊的流程，关于Kettle插件体系的介绍可以参考链接：Kettle插件体系介绍。这篇文章主要是针对Step插件的开发总结，不涉及开发其他类型插件的介绍。注意Kettle版本为5.x和4.x的插件结构稍有不同，本文针对的Kettle版本为5.x版本。">
+<meta property="og:updated_time" content="2017-08-05T06:41:56.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kettle5.x步骤组件开发总结">
+<meta name="twitter:description" content="1. 前言Kettle允许我们自定义开发插件以支持实际项目中特殊的流程，关于Kettle插件体系的介绍可以参考链接：Kettle插件体系介绍。这篇文章主要是针对Step插件的开发总结，不涉及开发其他类型插件的介绍。注意Kettle版本为5.x和4.x的插件结构稍有不同，本文针对的Kettle版本为5.x版本。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/01/05/kettle5.x-step-plugin-dev-summary/"/>
+
+
+
+
+
+  <title> Kettle5.x步骤组件开发总结 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/01/05/kettle5.x-step-plugin-dev-summary/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Kettle5.x步骤组件开发总结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-01-05T00:00:00+08:00">
+                2016-01-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ETL-kettle/" itemprop="url" rel="index">
+                    <span itemprop="name">ETL.kettle</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>Kettle允许我们自定义开发插件以支持实际项目中特殊的流程，关于Kettle插件体系的介绍可以参考链接：<a href="http://www.tuicool.com/articles/2YVZFv" target="_blank" rel="external">Kettle插件体系介绍</a>。这篇文章主要是针对Step插件的开发总结，不涉及开发其他类型插件的介绍。注意Kettle版本为5.x和4.x的插件结构稍有不同，本文针对的Kettle版本为5.x版本。</p>
+<a id="more"></a>
+<h2 id="2-开发总结"><a href="#2-开发总结" class="headerlink" title="2. 开发总结"></a>2. 开发总结</h2><h3 id="2-1-Step插件开发TODO"><a href="#2-1-Step插件开发TODO" class="headerlink" title="2.1. Step插件开发TODO"></a>2.1. Step插件开发TODO</h3><p>假设我们要实现一个Step插件，命名为Xxx，下面的类是必须实现的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Xxx</span> <span class="keyword">extends</span> <span class="title">BaseStep</span> <span class="keyword">implements</span> <span class="title">StepInterface</span></span></div><div class="line"><span class="title">public</span> <span class="title">class</span> <span class="title">XxxMeta</span> <span class="keyword">extends</span> <span class="title">BaseStepMeta</span> <span class="keyword">implements</span> <span class="title">StepMetaInterface</span></div><div class="line"><span class="title">public</span> <span class="title">class</span> <span class="title">XxxData</span> <span class="keyword">extends</span> <span class="title">BaseStepData</span> <span class="keyword">implements</span> <span class="title">StepDataInterface</span></div><div class="line"><span class="title">public</span> <span class="title">class</span> <span class="title">XxxDialog</span> <span class="keyword">extends</span> <span class="title">BaseStepDialog</span> <span class="keyword">implements</span> <span class="title">StepDialogInterface</span></div></pre></td></tr></table></figure>
+<p><strong>【备注】</strong><br>Kettle的插件体系已经相当完善，为了节省开发者自定义插件所花费的时间和精力，已经将大部分核心方法都实现并封装在各自的基类中，如BaseStep、BaseStepMeta、BaseStepDialog。如果想再进一步了解Kettle Step插件，可以阅读BaseXXX相关源码。</p>
+<h4 id="2-1-1-实现Xxx"><a href="#2-1-1-实现Xxx" class="headerlink" title="2.1.1. 实现Xxx"></a>2.1.1. 实现Xxx</h4><p>Step流程处理类，当Step真正运行起来，就是在这个实现类里面进行数据处理的，大部分核心方法都在BaseStep父类里面实现了，需要我们自行实现的方法有以下几个：</p>
+<p>(1) processRow </p>
+<p>步骤流程处理主方法，调用该方法来处理前面步骤输入的每一行数据，注意<code>processRow</code>每次处理一行数据。通过<code>getRow()</code>方法可以获取待处理的一行数据。当<code>processRow</code>方法返回<code>true</code>表示还有输入行要处理,当<code>processRow</code>返回<code>false</code>表示所有的行已经处理并可以结束对<code>processRow</code>函数的循环调用(在返回<code>fasle</code>之前通常都会调用<code>setOutputDone</code>来表述数据已经输出完毕)。</p>
+<p>(2) init</p>
+<p>步骤初始化的逻辑处理，可以在处理行数据之前做一些初始化逻辑操作，如打开文件流，打开网络连接，打开数据库连接等操作。如果没有特殊的初始化操作可以不用重写该方法。重写该方法记得先调用<code>super.init(...,...)</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">init</span><span class="params">(StepMetaInterface smi, StepDataInterface sdi)</span> </span>&#123;</div><div class="line"><span class="keyword">super</span>.init(smi, sdi);</div><div class="line"><span class="comment">// .... your extra init code</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>(3) dispose</p>
+<p>步骤处理结束后的逻辑处理，可以在这里释放资源，如关闭文件流，关闭网络连接，关闭数据库连接等。重写改方法记得先调用<code>super.dispose(...,...)</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dispose</span><span class="params">(StepMetaInterface smi, StepDataInterface sdi)</span> </span>&#123;</div><div class="line"><span class="keyword">super</span>.dispose(smi, sdi);</div><div class="line"><span class="comment">// .... your extra dispose code</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="2-1-2-实现XxxMeta"><a href="#2-1-2-实现XxxMeta" class="headerlink" title="2.1.2. 实现XxxMeta"></a>2.1.2. 实现XxxMeta</h4><p>实现这个类的作用有以下几点：</p>
+<ul>
+<li>负责Step流程元数据处理</li>
+<li>存储数据展示在对应的StepDialog上</li>
+<li>将核心数据保存在xml、资源库中，并可以从xml或者资源库读取并构成XxxMeta对象</li>
+</ul>
+<p>大部分核心方法都已经在BaseStepMeta父类中实现了，其中需要我们重写实现的方法有以下几个：</p>
+<p>(1) getDialogClassName</p>
+<p>该方法返回自定义XxxDialog的全限类名(包含包名)，如果XxxStep所在的包名为<code>com.A.di.trans.steps.xxx.XxxStep</code>，那么默认如果不重写该方法返回的XxxDialog全限类名为<code>com.A.di.ui.trans.steps.xxx.XxxDialog</code>。 </p>
+<p>(2) getStep</p>
+<p>构造Xxx实例，eg:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> StepInterface <span class="title">getStep</span><span class="params">(StepMeta stepMeta,</span></span></div><div class="line">		StepDataInterface stepDataInterface, <span class="keyword">int</span> copyNr,</div><div class="line">		TransMeta transMeta, Trans trans) &#123;</div><div class="line">	<span class="keyword">return</span> <span class="keyword">new</span> IdCardValidator(stepMeta, stepDataInterface, copyNr, transMeta, trans);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>(3) getStepData</p>
+<p>构造XxxData实例，eg:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> StepDataInterface <span class="title">getStepData</span><span class="params">()</span> </span>&#123;</div><div class="line">	<span class="keyword">return</span> <span class="keyword">new</span> IdCardValidatorData();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>(4) getFields</p>
+<p>处理输出行元数据，一般用于将输入行元数据添加额外的列字段元数据，这个方法通常在下一个步骤要用到上一个步骤输出的列字段时被调用。</p>
+<p>如下所示添加额外的列字段到输出行，eg:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="function">Override</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">getFields</span><span class="params">(RowMetaInterface inputRowMeta, String name,</span></div><div class="line">		RowMetaInterface[] info, StepMeta nextStep, VariableSpace space,</div><div class="line">		Repository repository, IMetaStore metaStore)</div><div class="line">		<span class="keyword">throws</span> KettleStepException &#123;</div><div class="line">	</div><div class="line">	String realIsValidFieldName = space.environmentSubstitute(isValidFieldName);</div><div class="line">	<span class="keyword">if</span>(!Const.isEmpty(realIsValidFieldName)) &#123;</div><div class="line">		ValueMetaInterface v = <span class="keyword">new</span> ValueMeta(realIsValidFieldName, ValueMeta.TYPE_BOOLEAN);</div><div class="line">		v.setOrigin(name); <span class="comment">// set Name of the step to use as input for the origin field in the values</span></div><div class="line">		inputRowMeta.addValueMeta(v);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String realNotValidMsgFieldName = space.environmentSubstitute(notValidMsgFieldName);</div><div class="line">	<span class="keyword">if</span>(!Const.isEmpty(realNotValidMsgFieldName)) &#123;</div><div class="line">		ValueMetaInterface v = <span class="keyword">new</span> ValueMeta(realNotValidMsgFieldName, ValueMeta.TYPE_STRING);</div><div class="line">		v.setOrigin(name);</div><div class="line">		inputRowMeta.addValueMeta(v);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String realIdCardLenFieldName = space.environmentSubstitute(idCardLenFieldName);</div><div class="line">	<span class="keyword">if</span>(!Const.isEmpty(realIdCardLenFieldName)) &#123;</div><div class="line">		ValueMetaInterface v = <span class="keyword">new</span> ValueMeta(realIdCardLenFieldName, ValueMeta.TYPE_STRING);</div><div class="line">		v.setOrigin(name);</div><div class="line">		inputRowMeta.addValueMeta(v);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String realAreaCodeFieldName = space.environmentSubstitute(areaCodeFieldName);</div><div class="line">	<span class="keyword">if</span>(!Const.isEmpty(realAreaCodeFieldName)) &#123;</div><div class="line">		ValueMetaInterface v = <span class="keyword">new</span> ValueMeta(realAreaCodeFieldName, ValueMeta.TYPE_STRING);</div><div class="line">		v.setOrigin(name);</div><div class="line">		inputRowMeta.addValueMeta(v);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String realBirthDateFieldName = space.environmentSubstitute(birthDateFieldName);</div><div class="line">	<span class="keyword">if</span>(!Const.isEmpty(realBirthDateFieldName)) &#123;</div><div class="line">		ValueMetaInterface v = <span class="keyword">new</span> ValueMeta(realBirthDateFieldName, ValueMeta.TYPE_STRING);</div><div class="line">		v.setOrigin(name);</div><div class="line">		inputRowMeta.addValueMeta(v);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	String realGenderFieldName = space.environmentSubstitute(genderFieldName);</div><div class="line">	<span class="keyword">if</span>(!Const.isEmpty(realGenderFieldName)) &#123;</div><div class="line">		ValueMetaInterface v = <span class="keyword">new</span> ValueMeta(realGenderFieldName, ValueMeta.TYPE_STRING);</div><div class="line">		v.setOrigin(name);</div><div class="line">		inputRowMeta.addValueMeta(v);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>(5) getXML</p>
+<p>将XxxMeta需要保存的元数据以xml文本形式返回，在使用文件资源库并保存转换的时候会调用该方法将步骤元数据保存到xml文件中(ktr后缀)。</p>
+<p>(6) loadXML</p>
+<p>从xml节点中获取XxxMeta元数据，在导入ktr文件到Spoon界面的时候会调用该方法加载对应的元数据信息。</p>
+<p>(7) saveRep</p>
+<p>与<code>getXML</code>方法类似，不同的是该方法将XxxMeta需要保存的元数据持久化到数据库资源库中</p>
+<p>(8) readRep</p>
+<p>从数据库资源库中读取XxxMeta元数据信息。</p>
+<h4 id="2-1-3-实现XxxData"><a href="#2-1-3-实现XxxData" class="headerlink" title="2.1.3. 实现XxxData"></a>2.1.3. 实现XxxData</h4><p>Step流程处理临时数据存储，实现该接口的类用来暂存流程处理过程所需要用到的数据，充当临时缓存。</p>
+<h4 id="2-1-4-实现XxxDialog"><a href="#2-1-4-实现XxxDialog" class="headerlink" title="2.1.4. 实现XxxDialog"></a>2.1.4. 实现XxxDialog</h4><p>Step插件元数据设置对话框，在Spoon中拖动该Step组件到设计区并双击时，就会调用这个实现类的open方法，实现该接口的类用来设置XxxMeta相关属性，其中需要我们实现的核心方法为:</p>
+<p>(1) open</p>
+<p>双击图标时候触发，负责渲染生成界面并添加XxxMeta元数据到界面上，这个方法会涉及到swt布局，所以方法体一般很长。方法返回值为步骤名<code>stepname</code>。</p>
+<h4 id="2-1-5-用注解代替plugin-xml"><a href="#2-1-5-用注解代替plugin-xml" class="headerlink" title="2.1.5. 用注解代替plugin.xml"></a>2.1.5. 用注解代替plugin.xml</h4><p>Kettle5.x版本可以用@Step注解定义来代替plugin.xml定义，@Step注解用于XxxMeta。关于@Step注解的使用说明可以参考以下链接：</p>
+<p><a href="http://wiki.pentaho.com/display/EAI/Annotated+step+plugin+development" target="_blank" rel="external">kettle使用注解开发插件</a></p>
+<p>@Step注解属性说明:</p>
+<ul>
+<li>id —— 插件唯一标识</li>
+<li>image —— 指定Step插件在Spoon中显示的图标</li>
+<li>i18nPackageName —— 指定国际化messages所在的包名</li>
+<li>name —— Step插件命名</li>
+<li>description —— Step插件描述</li>
+<li>categoryDescription —— 指定Step插件所属的Spoon转换”核心对象”目录</li>
+</ul>
+<h4 id="2-1-6-国际化-可选"><a href="#2-1-6-国际化-可选" class="headerlink" title="2.1.6. 国际化(可选)"></a>2.1.6. 国际化(可选)</h4><p>国际化使Spoon界面展示的说明文字、日志信息能够适应不同国家语言。虽然国际化在插件开发里面是可选的，但是仍然建议每个插件开发时都使用国际化来增加插件的可用性和可扩展性。</p>
+<p>实现国际化首先要在@Step注解中指定的i18nPackageName显示我们要存储国际化信息的基目录。然后在这个包下面新建多个properties，命名规则为<code>messages_[locate].properties</code>，其中locate表示国家，如<code>en_US</code>表示美国，<code>zh_CN</code>表示中国。</p>
+<p>示例:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">IdCardValidator.TransName=IdCard Validator</div><div class="line">IdCardValidator.TransDescription=validate id card format</div><div class="line"></div><div class="line">IdCardValidatorDialog.DialogTitle=IdCard Validator</div><div class="line">IdCardValidatorDialog.Stepname.Label=IdCard Validator</div><div class="line">IdCardValidatorDialog.FieldName.Label=IdCard Field</div><div class="line">IdCardValidatorDialog.OutputFields.Label=Output Fields</div><div class="line">IdCardValidatorDialog.IsValid.Label=IsValid field</div><div class="line">IdCardValidatorDialog.IsValid.Tooltip=choose one field to store the &apos;IsValid&apos; result</div><div class="line">IdCardValidatorDialog.IdCardLen.Label=IdCard Length field</div><div class="line">IdCardValidatorDialog.IdCardLen.Tooltip=choose one field to store the &apos;IdCardLen&apos; result</div><div class="line">IdCardValidatorDialog.NotValidMsg.Label=NotValidMsg field</div><div class="line">IdCardValidatorDialog.NotValidMsg.Tooltip=choose one field to store the &apos;NotValidMsg&apos; result</div><div class="line">IdCardValidatorDialog.AreaCode.Label=Area Code field</div><div class="line">IdCardValidatorDialog.AreaCode.Tooltip=choose one field to store the &apos;AreaCode&apos; result</div><div class="line">IdCardValidatorDialog.BirthDate.Label=Birth Date field</div><div class="line">IdCardValidatorDialog.BirthDate.Tooltip=choose one field to store the &apos;BirthDate&apos; result</div><div class="line">IdCardValidatorDialog.Gender.Label=Gender field</div><div class="line">IdCardValidatorDialog.Gender.Tooltip=choose one field to store the &apos;Gender&apos; result</div><div class="line"></div><div class="line">IdCardValidatorDialog.FailedToGetFields.DialogTitle=FailToGetFields</div><div class="line">IdCardValidatorDialog.FailedToGetFields.DialogMessage=fail to get fields from previous step</div><div class="line"></div><div class="line">IdCardValidator.Error.IdCardFieldMissing=missing id card field</div><div class="line">IdCardValidator.Exception.CoundNotFoundField=could not found the id card field</div><div class="line">IdCardValidator.Error.IsValidFieldMissing=missing is valid field</div></pre></td></tr></table></figure>
+<p>在代码中通过如下方式来引用这些属性：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> Class&lt;?&gt; PKG = IdCardValidatorMeta.class; <span class="comment">// for i18n purposes, needed by Translator2!!</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> String <span class="title">open</span><span class="params">()</span> </span>&#123;</div><div class="line">	...</div><div class="line">	BaseMessages.getString( PKG, <span class="string">"IdCardValidatorDialog.DialogTitle"</span> );	</div><div class="line">	...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/kettle/" rel="tag"># kettle</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/05/carte-deploy-for-windows-service/" rel="next" title="将Carte部署为Windows服务">
+                <i class="fa fa-chevron-left"></i> 将Carte部署为Windows服务
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/20/carte-introduction/" rel="prev" title="Kettle Carte简介">
+                Kettle Carte简介 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-前言"><span class="nav-number">1.</span> <span class="nav-text">1. 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-开发总结"><span class="nav-number">2.</span> <span class="nav-text">2. 开发总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Step插件开发TODO"><span class="nav-number">2.1.</span> <span class="nav-text">2.1. Step插件开发TODO</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-1-实现Xxx"><span class="nav-number">2.1.1.</span> <span class="nav-text">2.1.1. 实现Xxx</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-2-实现XxxMeta"><span class="nav-number">2.1.2.</span> <span class="nav-text">2.1.2. 实现XxxMeta</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-3-实现XxxData"><span class="nav-number">2.1.3.</span> <span class="nav-text">2.1.3. 实现XxxData</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-4-实现XxxDialog"><span class="nav-number">2.1.4.</span> <span class="nav-text">2.1.4. 实现XxxDialog</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-5-用注解代替plugin-xml"><span class="nav-number">2.1.5.</span> <span class="nav-text">2.1.5. 用注解代替plugin.xml</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-6-国际化-可选"><span class="nav-number">2.1.6.</span> <span class="nav-text">2.1.6. 国际化(可选)</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

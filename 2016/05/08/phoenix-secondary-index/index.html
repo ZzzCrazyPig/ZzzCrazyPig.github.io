@@ -1,0 +1,799 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase,Phoenix," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="我们知道HBase唯一的索引就是rowkey，相当于关系型数据库里面的主键。对于使用rowkey进行定位的查询，HBase能够做到毫秒级别返回。但是，HBase没有辅助索引的概念，也就是说如果我们的查询条件涉及到列族里面的某些列，那么HBase查询效率将会大大降低，复杂的查询甚至会给HBase集群带来灾难性的性能问题。幸运的是，Phoenix提供了二级索引表来构建HBase辅助索引，用于提供除了r">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Phoenix 二级索引">
+<meta property="og:url" content="http://yoursite.com/2016/05/08/phoenix-secondary-index/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="我们知道HBase唯一的索引就是rowkey，相当于关系型数据库里面的主键。对于使用rowkey进行定位的查询，HBase能够做到毫秒级别返回。但是，HBase没有辅助索引的概念，也就是说如果我们的查询条件涉及到列族里面的某些列，那么HBase查询效率将会大大降低，复杂的查询甚至会给HBase集群带来灾难性的性能问题。幸运的是，Phoenix提供了二级索引表来构建HBase辅助索引，用于提供除了r">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219154138858">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219151814637">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219151852361">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152037643">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152150225">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152219897">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152627013">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152636926">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152759961">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219152809807">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219153059415">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219153107290">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219153146069">
+<meta property="og:image" content="http://img.blog.csdn.net/20151219153153929">
+<meta property="og:updated_time" content="2017-08-05T06:40:40.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Phoenix 二级索引">
+<meta name="twitter:description" content="我们知道HBase唯一的索引就是rowkey，相当于关系型数据库里面的主键。对于使用rowkey进行定位的查询，HBase能够做到毫秒级别返回。但是，HBase没有辅助索引的概念，也就是说如果我们的查询条件涉及到列族里面的某些列，那么HBase查询效率将会大大降低，复杂的查询甚至会给HBase集群带来灾难性的性能问题。幸运的是，Phoenix提供了二级索引表来构建HBase辅助索引，用于提供除了r">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20151219154138858">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/05/08/phoenix-secondary-index/"/>
+
+
+
+
+
+  <title> Phoenix 二级索引 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix-secondary-index/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Phoenix 二级索引
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-08T00:00:00+08:00">
+                2016-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/HBase-Phoenix/" itemprop="url" rel="index">
+                    <span itemprop="name">HBase.Phoenix</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>我们知道HBase唯一的索引就是rowkey，相当于关系型数据库里面的主键。对于使用rowkey进行定位的查询，HBase能够做到毫秒级别返回。但是，HBase没有辅助索引的概念，也就是说如果我们的查询条件涉及到列族里面的某些列，那么HBase查询效率将会大大降低，复杂的查询甚至会给HBase集群带来灾难性的性能问题。幸运的是，Phoenix提供了二级索引表来构建HBase辅助索引，用于提供除了rowkey以外的列条件高效查询。这篇文章主要介绍Phoenix二级索引的概念和使用方式。</p>
+<h2 id="1-为什么需要用二级索引"><a href="#1-为什么需要用二级索引" class="headerlink" title="1. 为什么需要用二级索引?"></a>1. 为什么需要用二级索引?</h2><p>对于HBase而言，如果想精确地定位到某行记录，唯一的办法是通过rowkey来查询。如果不通过rowkey来查找数据，就必须逐行地比较每一列的值，即全表扫瞄。对于较大的表，全表扫描的代价是不可接受的。但是，很多情况下，需要从多个角度查询数据。例如，在定位某个人的时候，可以通过姓名、身份证号、学籍号等不同的角度来查询，要想把这么多角度的数据都放到rowkey中几乎不可能（业务的灵活性不允许，对rowkey长度的要求也不允许）。所以，需要secondary index（二级索引）来完成这件事。secondary index的原理很简单，但是如果自己维护的话则会麻烦一些。现在，Phoenix已经提供了对HBase secondary index的支持。 </p>
+<a id="more"></a>
+<h2 id="2-Phoenix-Global-Indexing-And-Local-Indexing"><a href="#2-Phoenix-Global-Indexing-And-Local-Indexing" class="headerlink" title="2. Phoenix Global Indexing And Local Indexing"></a>2. Phoenix Global Indexing And Local Indexing</h2><h3 id="2-1-Global-Indexing"><a href="#2-1-Global-Indexing" class="headerlink" title="2.1 Global Indexing"></a>2.1 Global Indexing</h3><p>Global indexing，全局索引，适用于<strong>读多写少</strong>的业务场景。使用Global indexing在写数据的时候开销很大，<strong>因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT），都会引起索引表的更新</strong>，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。<strong>在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。</strong></p>
+<h3 id="2-2-Local-Indexing"><a href="#2-2-Local-Indexing" class="headerlink" title="2.2 Local Indexing"></a>2.2 Local Indexing</h3><p>Local indexing，本地索引，适用于写操作频繁以及空间受限制的场景。与Global indexing一样，Phoenix会自动判定在进行查询的时候是否使用索引。<strong>使用Local indexing时，索引数据和数据表的数据存放在相同的服务器中</strong>，这样避免了在写操作的时候往不同服务器的索引表中写索引带来的额外开销。<strong>使用Local indexing的时候即使查询的字段不是索引字段索引表也会被使用，这会带来查询速度的提升，这点跟Global indexing不同。</strong>对于Local Indexing，一个数据表的所有索引数据都存储在一个单一的独立的可共享的表中。</p>
+<h2 id="3-Immutable-index-And-Mutable-index"><a href="#3-Immutable-index-And-Mutable-index" class="headerlink" title="3. Immutable index And Mutable index"></a>3. Immutable index And Mutable index</h2><h3 id="3-1-immutable-index"><a href="#3-1-immutable-index" class="headerlink" title="3.1 immutable index"></a>3.1 immutable index</h3><p>immutable index，不可变索引，适用于数据只增加不更新并且按照时间先后顺序存储（time-series data）的场景，如保存日志数据或者事件数据等。<strong>不可变索引的存储方式是write one，append only</strong>。当在Phoenix使用create table语句时指定IMMUTABLE_ROWS = true表示该表上创建的索引将被设置为不可变索引。<strong>Phoenix默认情况下如果在create table时不指定IMMUTABLE_ROW = true时，表示该表为mutable。</strong>不可变索引分为Global immutable index和Local immutable index两种。</p>
+<h3 id="3-2-mutable-index"><a href="#3-2-mutable-index" class="headerlink" title="3.2 mutable index"></a>3.2 mutable index</h3><p>mutable index，可变索引，适用于数据有增删改的场景。Phoenix默认情况创建的索引都是可变索引，除非在create table的时候显式地指定IMMUTABLE_ROWS = true。可变索引同样分为Global immutable index和Local immutable index两种。</p>
+<h2 id="4-配置HBase支持Phoenix二级索引"><a href="#4-配置HBase支持Phoenix二级索引" class="headerlink" title="4.配置HBase支持Phoenix二级索引"></a>4.配置HBase支持Phoenix二级索引</h2><p>如果要启用phoenix的二级索引功能，需要对HMaster以及每一个RegionServer上的hbase-site.xml进行额外的配置。首先，在每一个RegionServer的hbase-site.xml里加入如下属性：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span> </div><div class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span> </div><div class="line">  <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span> </div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span> </div><div class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.region.server.rpc.scheduler.factory.class<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory<span class="tag">&lt;/<span class="name">value</span>&gt;</span> </div><div class="line">  <span class="tag">&lt;<span class="name">description</span>&gt;</span>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata updates<span class="tag">&lt;/<span class="name">description</span>&gt;</span> </div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.rpc.controllerfactory.class<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">description</span>&gt;</span>Factory to create the Phoenix RPC Scheduler that uses separate queues for index and metadata updates<span class="tag">&lt;/<span class="name">description</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.coprocessor.regionserver.classes<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.LocalIndexMerger<span class="tag">&lt;/<span class="name">value</span>&gt;</span> </div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>如果没有在每个regionserver上的hbase-site.xml里面配置如上属性，那么使用create index语句创建二级索引将会抛出如下异常：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Error: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server tableName=TEST_INDEXES (state=42Y88,code=1029)</div></pre></td></tr></table></figure>
+<p>然后在每一个master的hbase-site.xml里加入如下属性：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.master.loadbalancer.class<span class="tag">&lt;/<span class="name">name</span>&gt;</span>                                     </div><div class="line">  <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.phoenix.hbase.index.balancer.IndexLoadBalancer<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.coprocessor.master.classes<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.phoenix.hbase.index.master.IndexMasterObserver<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>完成上述修改后重启hbase集群使配置生效。</p>
+<p><strong>【特别注意】</strong><br>如果使用的是CDH部署的HBase，需要在Cloudera Manager管理页面里面的HBase“配置”页面里的hbase-site.xml项增加上述配置，并在管理页面里面重启HBase才能使得配置生效。</p>
+<p><img src="http://img.blog.csdn.net/20151219154138858" alt=""></p>
+<h2 id="5-测试案例"><a href="#5-测试案例" class="headerlink" title="5. 测试案例"></a>5. 测试案例</h2><h3 id="5-1-测试案例1"><a href="#5-1-测试案例1" class="headerlink" title="5.1 测试案例1"></a>5.1 测试案例1</h3><p>HBase 1000w数据<br>users_test表</p>
+<p><img src="http://img.blog.csdn.net/20151219151814637" alt="users_test表"></p>
+<p><strong>【Global Indexing】</strong></p>
+<p>在没有创建二级索引之前查询特定USER_NAME的用户信息耗时大约16s左右。</p>
+<p><img src="http://img.blog.csdn.net/20151219151852361" alt=""></p>
+<p>在USER_NAME列上面创建二级索引：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">create index USERS_TEST_IDX0 on &quot;users_test (&quot;info&quot;.USER_NAME)</div></pre></td></tr></table></figure>
+<p>创建二级索引后查询特定USER_NAME的用户名称耗时为ms级别</p>
+<p><img src="http://img.blog.csdn.net/20151219152037643" alt=""></p>
+<p><strong>【说明】</strong> 可以通过explain命令来查看查询是否用到二级索引</p>
+<p><img src="http://img.blog.csdn.net/20151219152150225" alt=""></p>
+<p><strong>【注意】</strong> 如果在select条件里面选择了其他的列，如USER_NO，因为该列没有存在于索引表，因此查询不会走索引表。</p>
+<p><img src="http://img.blog.csdn.net/20151219152219897" alt=""></p>
+<p>如果想在select USER_NAME,USER_NO查询仍然走索引，必须创建如下索引：</p>
+<ul>
+<li>方式一，采取INCLUDE(index cover，即索引覆盖)的方式:</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">create</span> <span class="keyword">index</span> USERS_TEST_IDX1 <span class="keyword">on</span> <span class="string">"users_test"</span>(<span class="string">"info"</span>.USER_NAME) <span class="keyword">INCLUDE</span>(<span class="string">"info"</span>.USER_NO)</div></pre></td></tr></table></figure>
+<blockquote>
+<p>索引覆盖其实就是将INCLUDE里面包含的列都存储到索引表里面，当检索的时候就可以从索引表里直接带回这些列值。要特别注意索引列和索引覆盖列的区别，索引列在索引表里面是以rowkey的形式存在，多个索引列以某个约定的字节分割然后一起存储在rowkey里面，也就是说当索引列有很多个的时候，rowkey的长度也相应会变长，大小取决于索引列值的大小。而索引覆盖列，是存储在索引表的列族中。</p>
+</blockquote>
+<ul>
+<li>方式二，采取多列索引:</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">create index USERS_TEST_IDX2 on &quot;users_test&quot;(&quot;info&quot;.USER_NAME, &quot;info&quot;.USER_NO)</div></pre></td></tr></table></figure>
+<p><strong>【说明】</strong> </p>
+<p>多列索引在满足前缀式的情况才会用到，如创建了A,B,C顺序的多列索引，当在where条件指定A条件、A B条件或者A B C条件均会走索引，但是 B C条件则无法走索引。</p>
+<p><strong>【Local Indexing】</strong></p>
+<p>在users_test表创建local index类型的二级索引：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">create local index USERS_TEST_LOCAL_IDX ON &quot;users_test&quot;(&quot;info&quot;.USER_NAME)</div></pre></td></tr></table></figure>
+<p><strong>与Global Indexing不同的是，如果select子句里面带有除了索引列(USER_NAME)以外的列，仍然可以走索引表。</strong></p>
+<p><img src="http://img.blog.csdn.net/20151219152627013" alt=""></p>
+<p><img src="http://img.blog.csdn.net/20151219152636926" alt=""></p>
+<p><strong>【说明】</strong> </p>
+<p>创建Local Indexing时候指定的索引名称会与实际创建在Hbase里面的表名称不一致，这应该是Phoenix做了映射的关系，而且对于同一个Hbase里面的table创建多个Local Indexing，索引表在Hbse list命令查询的时候也只有一个。</p>
+<h3 id="5-2-测试案例2"><a href="#5-2-测试案例2" class="headerlink" title="5.2 测试案例2"></a>5.2 测试案例2</h3><p>HBase 1e数据<br>ammeter_test表</p>
+<p><img src="http://img.blog.csdn.net/20151219152759961" alt=""></p>
+<p><img src="http://img.blog.csdn.net/20151219152809807" alt=""></p>
+<p><strong>【Global Indexing】</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">create</span> <span class="keyword">index</span> AMMETER_TEST_IDX</div><div class="line"> <span class="keyword">on</span> AMMETER_TEST (<span class="string">"info"</span>.<span class="string">"ammeter_no1"</span>, <span class="string">"info"</span>.<span class="string">"ammeter_no2"</span>) <span class="keyword">include</span>(<span class="string">"info"</span>.<span class="string">"ammeter_price"</span>);</div></pre></td></tr></table></figure>
+<p>(1) 条件查询包含rowkey</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; explain select * from AMMETER_TEST where &quot;info&quot;.&quot;ammeter_no1&quot; = &apos;11000000005281&apos; AND &quot;ammeter_no2&quot; = &apos;11000000001004&apos; and ROW = &apos;11000002310462&apos;</div><div class="line">&gt; select * from AMMETER_TEST where &quot;info&quot;.&quot;ammeter_no1&quot; = &apos;11000000005281&apos; AND &quot;ammeter_no2&quot; = &apos;11000000001004&apos; and ROW = &apos;11000002310462&apos;</div></pre></td></tr></table></figure>
+<p><img src="http://img.blog.csdn.net/20151219153059415" alt=""></p>
+<p><img src="http://img.blog.csdn.net/20151219153107290" alt=""></p>
+<p>(2) 条件查询不包含rowkey但满足二级索引查找条件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; explain select ROW,&quot;ammeter_price&quot; from AMMETER_TEST where &quot;info&quot;.&quot;ammeter_no1&quot; = &apos;11000000005281&apos; and &quot;ammeter_no2&quot; = &apos;11000000001004&apos;</div><div class="line">&gt; select ROW,&quot;ammeter_price&quot; from AMMETER_TEST where &quot;info&quot;.&quot;ammeter_no1&quot; = &apos;11000000005281&apos; and &quot;ammeter_no2&quot; = &apos;11000000001004&apos; LIMIT 5</div></pre></td></tr></table></figure>
+<p><img src="http://img.blog.csdn.net/20151219153146069" alt=""></p>
+<p><img src="http://img.blog.csdn.net/20151219153153929" alt=""></p>
+<p><strong>【分析】</strong></p>
+<ul>
+<li>对于包含rowkey的条件查询，Phoenix会启用服务器端过滤器快速筛选匹配的行并返回，亿级数据也能达到毫秒级别响应。</li>
+<li>对于没有包含rowkey的条件查询，如果条件满足Phoenix二级索引查找，Phoenix会查二级索引表并快速返回记录。</li>
+</ul>
+<h2 id="6-同步创建索引与异步创建索引"><a href="#6-同步创建索引与异步创建索引" class="headerlink" title="6. 同步创建索引与异步创建索引"></a>6. 同步创建索引与异步创建索引</h2><p>前面所讲的创建索引为同步创建索引，当执行create index的时候，索引表会直接与源数据表进行同步。但是，有时候我们的源表数据量很大，同步创建索引会抛出异常。异常信息大致如下所示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line">15/12/11 14:20:08 WARN client.ScannerCallable: Ignore, probably already closed</div><div class="line">org.apache.hadoop.hbase.UnknownScannerException: org.apache.hadoop.hbase.UnknownScannerException: Name: 37, already closed?</div><div class="line">at org.apache.hadoop.hbase.regionserver.RSRpcServices.scan(RSRpcServices.java:2092)</div><div class="line">at org.apache.hadoop.hbase.protobuf.generated.ClientProtos<span class="variable">$ClientService</span><span class="variable">$2</span>.callBlockingMethod(ClientProtos.java:31443)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcServer.call(RpcServer.java:2035)</div><div class="line">at org.apache.hadoop.hbase.ipc.CallRunner.run(CallRunner.java:107)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcExecutor.consumerLoop(RpcExecutor.java:130)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcExecutor<span class="variable">$1</span>.run(RpcExecutor.java:107)</div><div class="line">at java.lang.Thread.run(Thread.java:745)</div><div class="line">at sun.reflect.GeneratedConstructorAccessor13.newInstance(Unknown Source)</div><div class="line">at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)</div><div class="line">at java.lang.reflect.Constructor.newInstance(Constructor.java:526)</div><div class="line">at org.apache.hadoop.ipc.RemoteException.instantiateException(RemoteException.java:106)</div><div class="line">at org.apache.hadoop.ipc.RemoteException.unwrapRemoteException(RemoteException.java:95)</div><div class="line">at org.apache.hadoop.hbase.protobuf.ProtobufUtil.getRemoteException(ProtobufUtil.java:313)</div><div class="line">at org.apache.hadoop.hbase.client.ScannerCallable.close(ScannerCallable.java:329)</div><div class="line">at org.apache.hadoop.hbase.client.ScannerCallable.call(ScannerCallable.java:184)</div><div class="line">at org.apache.hadoop.hbase.client.ScannerCallableWithReplicas.call(ScannerCallableWithReplicas.java:136)</div><div class="line">at org.apache.hadoop.hbase.client.ScannerCallableWithReplicas.call(ScannerCallableWithReplicas.java:56)</div><div class="line">at org.apache.hadoop.hbase.client.RpcRetryingCaller.callWithoutRetries(RpcRetryingCaller.java:200)</div><div class="line">at org.apache.hadoop.hbase.client.ClientScanner.call(ClientScanner.java:288)</div><div class="line">at org.apache.hadoop.hbase.client.ClientScanner.close(ClientScanner.java:507)</div><div class="line">at org.apache.phoenix.iterate.ScanningResultIterator.close(ScanningResultIterator.java:49)</div><div class="line">at org.apache.phoenix.iterate.TableResultIterator.close(TableResultIterator.java:95)</div><div class="line">at org.apache.phoenix.jdbc.PhoenixResultSet.close(PhoenixResultSet.java:162)</div><div class="line">at org.apache.phoenix.compile.UpsertCompiler.upsertSelect(UpsertCompiler.java:199)</div><div class="line">at org.apache.phoenix.compile.UpsertCompiler.access<span class="variable">$000</span>(UpsertCompiler.java:114)</div><div class="line">at org.apache.phoenix.compile.UpsertCompiler<span class="variable">$UpsertingParallelIteratorFactory</span>.mutate(UpsertCompiler.java:229)</div><div class="line">at org.apache.phoenix.compile.MutatingParallelIteratorFactory.newIterator(MutatingParallelIteratorFactory.java:62)</div><div class="line">at org.apache.phoenix.iterate.ParallelIterators<span class="variable">$1</span>.call(ParallelIterators.java:109)</div><div class="line">at org.apache.phoenix.iterate.ParallelIterators<span class="variable">$1</span>.call(ParallelIterators.java:100)</div><div class="line">at java.util.concurrent.FutureTask.run(FutureTask.java:262)</div><div class="line">at org.apache.phoenix.job.JobManager<span class="variable">$InstrumentedJobFutureTask</span>.run(JobManager.java:183)</div><div class="line">at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)</div><div class="line">at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:615)</div><div class="line">at java.lang.Thread.run(Thread.java:745)</div><div class="line">Caused by: org.apache.hadoop.hbase.ipc.RemoteWithExtrasException(org.apache.hadoop.hbase.UnknownScannerException): org.apache.hadoop.hbase.UnknownScannerException: Name: 37, already closed?</div><div class="line">at org.apache.hadoop.hbase.regionserver.RSRpcServices.scan(RSRpcServices.java:2092)</div><div class="line">at org.apache.hadoop.hbase.protobuf.generated.ClientProtos<span class="variable">$ClientService</span><span class="variable">$2</span>.callBlockingMethod(ClientProtos.java:31443)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcServer.call(RpcServer.java:2035)</div><div class="line">at org.apache.hadoop.hbase.ipc.CallRunner.run(CallRunner.java:107)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcExecutor.consumerLoop(RpcExecutor.java:130)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcExecutor<span class="variable">$1</span>.run(RpcExecutor.java:107)</div><div class="line">at java.lang.Thread.run(Thread.java:745)</div><div class="line">at org.apache.hadoop.hbase.ipc.RpcClientImpl.call(RpcClientImpl.java:1199)</div><div class="line">at org.apache.hadoop.hbase.ipc.AbstractRpcClient.callBlockingMethod(AbstractRpcClient.java:216)</div><div class="line">at org.apache.hadoop.hbase.ipc.AbstractRpcClient<span class="variable">$BlockingRpcChannelImplementation</span>.callBlockingMethod(AbstractRpcClient.java:300)</div><div class="line">at org.apache.hadoop.hbase.protobuf.generated.ClientProtos<span class="variable">$ClientService</span><span class="variable">$BlockingStub</span>.scan(ClientProtos.java:31889)</div><div class="line">at org.apache.hadoop.hbase.client.ScannerCallable.close(ScannerCallable.java:327)</div><div class="line">... 20 more</div></pre></td></tr></table></figure>
+<p>这个时候，我们可以采用异步创建索引，方式如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">CREATE INDEX async_index ON my_schema.my_table (v) ASYNC</div></pre></td></tr></table></figure>
+<p>通过create index的时候指定 <code>ASYNC</code> 关键字来指定异步创建索引。执行这个命令之后并不会引起索引表与源表的直接同步。这个时候查询并不会使用这个索引表。那么索引数据的导入还需要采用phoenix提供的索引同步工具类 <code>IndexTool</code> ， 这是一个mapreduce工具类，使用方式如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$&#123;HBASE_HOME&#125;</span>/bin/hbase org.apache.phoenix.mapreduce.index.IndexTool</div><div class="line">  --schema MY_SCHEMA --data-table MY_TABLE --index-table ASYNC_IDX</div><div class="line">  --output-path ASYNC_IDX_HFILES</div></pre></td></tr></table></figure>
+<p>当mapreduce任务执行结束，这个索引表才会变成可用。</p>
+<h2 id="7-参考"><a href="#7-参考" class="headerlink" title="7. 参考"></a>7. 参考</h2><p>(1) <a href="http://zy19982004.iteye.com/blog/2086605" target="_blank" rel="external">可变索引与不可变索引</a></p>
+<p>(2) <a href="http://blog.csdn.net/maomaosi2009/article/details/45600109" target="_blank" rel="external">Globaling Indexing</a></p>
+<p>(3) <a href="http://blog.csdn.net/maomaosi2009/article/details/45619047" target="_blank" rel="external">Local Indexing</a></p>
+<p>(4) <a href="http://blog.csdn.net/u011491148/article/details/45749807" target="_blank" rel="external">配置二级索引及测试</a></p>
+<p>(5) <a href="http://phoenix.apache.org/secondary_indexing.html" target="_blank" rel="external">Phoenix官网文档</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag"># HBase</a>
+          
+            <a href="/tags/Phoenix/" rel="tag"># Phoenix</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/08/phoenix4.6-adapt-cdh5.4/" rel="next" title="Phoenix4.6 适配 CDH5.4">
+                <i class="fa fa-chevron-left"></i> Phoenix4.6 适配 CDH5.4
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/08/phoenix-salted-table/" rel="prev" title="Phoenix Salted Table">
+                Phoenix Salted Table <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-为什么需要用二级索引"><span class="nav-number">1.</span> <span class="nav-text">1. 为什么需要用二级索引?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Phoenix-Global-Indexing-And-Local-Indexing"><span class="nav-number">2.</span> <span class="nav-text">2. Phoenix Global Indexing And Local Indexing</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Global-Indexing"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 Global Indexing</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Local-Indexing"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 Local Indexing</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Immutable-index-And-Mutable-index"><span class="nav-number">3.</span> <span class="nav-text">3. Immutable index And Mutable index</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-immutable-index"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 immutable index</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-mutable-index"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 mutable index</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-配置HBase支持Phoenix二级索引"><span class="nav-number">4.</span> <span class="nav-text">4.配置HBase支持Phoenix二级索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-测试案例"><span class="nav-number">5.</span> <span class="nav-text">5. 测试案例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-测试案例1"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 测试案例1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-测试案例2"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 测试案例2</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-同步创建索引与异步创建索引"><span class="nav-number">6.</span> <span class="nav-text">6. 同步创建索引与异步创建索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-参考"><span class="nav-number">7.</span> <span class="nav-text">7. 参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

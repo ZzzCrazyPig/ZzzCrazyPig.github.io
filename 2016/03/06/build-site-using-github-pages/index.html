@@ -1,0 +1,820 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="blog," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1. 搭建技术博客相信很多码农在某一天会有这么一个小冲动——“我要搭建属于自己的技术博客”，然后就会开始Google着——“如何搭建自己的技术博客？”。很惭愧，我也是其中的一员。但是很幸运，发现其实以前用过的GitHub已经为我们提供了搭建个人技术博客的平台——GitHub Pages！使用GitHub Pages来搭建博客有以下好处：
+
+提供一定免费空间给你搭建个人博客
+托管在GitHub上面安">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用GitHub Pages搭建技术博客">
+<meta property="og:url" content="http://yoursite.com/2016/03/06/build-site-using-github-pages/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="1. 搭建技术博客相信很多码农在某一天会有这么一个小冲动——“我要搭建属于自己的技术博客”，然后就会开始Google着——“如何搭建自己的技术博客？”。很惭愧，我也是其中的一员。但是很幸运，发现其实以前用过的GitHub已经为我们提供了搭建个人技术博客的平台——GitHub Pages！使用GitHub Pages来搭建博客有以下好处：
+
+提供一定免费空间给你搭建个人博客
+托管在GitHub上面安">
+<meta property="og:updated_time" content="2017-08-05T06:42:16.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用GitHub Pages搭建技术博客">
+<meta name="twitter:description" content="1. 搭建技术博客相信很多码农在某一天会有这么一个小冲动——“我要搭建属于自己的技术博客”，然后就会开始Google着——“如何搭建自己的技术博客？”。很惭愧，我也是其中的一员。但是很幸运，发现其实以前用过的GitHub已经为我们提供了搭建个人技术博客的平台——GitHub Pages！使用GitHub Pages来搭建博客有以下好处：
+
+提供一定免费空间给你搭建个人博客
+托管在GitHub上面安">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/03/06/build-site-using-github-pages/"/>
+
+
+
+
+
+  <title> 使用GitHub Pages搭建技术博客 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/06/build-site-using-github-pages/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                使用GitHub Pages搭建技术博客
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-06T00:00:00+08:00">
+                2016-03-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blog/" itemprop="url" rel="index">
+                    <span itemprop="name">blog</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-搭建技术博客"><a href="#1-搭建技术博客" class="headerlink" title="1. 搭建技术博客"></a>1. 搭建技术博客</h2><p>相信很多码农在某一天会有这么一个小冲动——“我要搭建属于自己的技术博客”，然后就会开始Google着——“如何搭建自己的技术博客？”。很惭愧，我也是其中的一员。但是很幸运，发现其实以前用过的GitHub已经为我们提供了搭建个人技术博客的平台——GitHub Pages！使用GitHub Pages来搭建博客有以下好处：</p>
+<ul>
+<li>提供一定免费空间给你搭建个人博客</li>
+<li>托管在GitHub上面安全可靠，节省更多考虑实现技术细节的时间</li>
+<li>基于模板脚本Jekyll来搭建，快速且简单，开源社区提供了很多Jekyll主题供你自行定制个人博客，如Jekyll Bootstrap</li>
+<li>使用Markdown语法来编写博客文章，可以让你专注于写作，而不必去在意太多格式或样式</li>
+</ul>
+<p>基于以上好处，我们可以使用GitHub Pages来搭建自己的技术博客。</p>
+<blockquote>
+<p>如果你还没有听说过Git、GitHub以及Markdown，建议你先了解一下这些东西。因为这篇文章所讲的搭建博客的必须前提是掌握这些工具的基本使用。</p>
+</blockquote>
+<a id="more"></a>
+<h3 id="1-1-Jekyll简介"><a href="#1-1-Jekyll简介" class="headerlink" title="1.1 Jekyll简介"></a>1.1 Jekyll简介</h3><p>Jekyll是一种简单的、适用于博客的、静态网站生成引擎。它使用一个模板目录作为网站布局的基础框架，支持Markdown的解析，提供了模板、变量、插件等功能，最终生成一个完整的静态Web站点。说白了就是，只要安装Jekyll的规范和结构，不用写html，就可以生成网站。Github Pages允许我们使用Jekyll来搭建个人站点。</p>
+<h3 id="1-2-Jekyll目录结构"><a href="#1-2-Jekyll目录结构" class="headerlink" title="1.2 Jekyll目录结构"></a>1.2 Jekyll目录结构</h3><p>Jekyll通过规范目录结构来帮助我们生成一个完整的静态站点。目录结构如下所示：</p>
+<pre><code>.
+|-- _config.yml
+|-- _includes
+|-- _layouts
+|   |-- default.html
+|   |-- post.html
+|-- _posts
+|   |-- 2011-10-25-open-source-is-good.markdown
+|   |-- 2011-04-26-hello-world.markdown
+|-- _site
+|-- index.html
+|-- assets
+    |-- css
+        |-- style.css
+    |-- javascripts
+</code></pre><ul>
+<li><strong>_config.yml</strong></li>
+</ul>
+<p>用来保存站点的全局配置，包括站点名称(title)、作者信息(author)、主题模板相关配置(如我们后面将要用到的Jekyll Bootstrap主题模板)、访问路径配置(permalink)、markdown选择、高亮设置等等。</p>
+<ul>
+<li><strong>_includes</strong></li>
+</ul>
+<p>通常我们将一些通用子模板文件，如html模板、Liquid模板放置到这个目录下面，然后通过如下脚本命令来引入这些模板：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;% raw %&#125;&#123; % include /subfolder/filename % &#125;&#123;% endraw %&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>其中subfolder是相对于_includes目录而言的子目录。</p>
+</blockquote>
+<ul>
+<li><strong>_layouts</strong></li>
+</ul>
+<p>这个文件目录用来存放整个站点的通用布局模板html文件，在这些模板文件里面可以使用Liquid脚本语言来include前面所说的_includes文件目录里面的某些子模板脚本或者html子模板文件。</p>
+<ul>
+<li><strong>_posts</strong></li>
+</ul>
+<p>_posts文件目录用来存放我们发布的文章，文件命名规范为<code>@YEAR-MONTH-DATE-title.MARKUP@</code>，如<strong>“2016-03-01-hello-jekyll.md”</strong>。文件格式可以是html或者Markdown，推荐使用Markdown来写文章。</p>
+<ul>
+<li><strong>_site</strong></li>
+</ul>
+<p>这个文件夹是Jekyll引擎自动生成的，用来存放解析生成的站点文件。当我们安装了Jekyll并启动Jekyll成功以后，将会看到这个目录下生成了很多html文件。</p>
+<ul>
+<li><strong>assets</strong></li>
+</ul>
+<p>assets目录不是Jekyll要求必须有的目录，通常把一些css样式、js脚本、图片资源放置在这个文件夹下面。</p>
+<h2 id="2-搭建流程"><a href="#2-搭建流程" class="headerlink" title="2. 搭建流程"></a>2. 搭建流程</h2><h3 id="2-1-本地开发环境搭建"><a href="#2-1-本地开发环境搭建" class="headerlink" title="2.1 本地开发环境搭建"></a>2.1 本地开发环境搭建</h3><blockquote>
+<p>这里假设你已经拥有了一个GitHub账号并且在本地已经安装了Git工具。</p>
+</blockquote>
+<p>Jekyll开发环境依赖于Ruby，因此我们必须先保证本地安装了Ruby环境，这里以Windows为例来介绍Jekyll本地开发环境的安装。</p>
+<p>(1) 从<a href="http://rubyinstaller.org/downloads/" target="_blank" rel="external">RubyInstaller官网下载页面</a>安装最新的RubyInstaller并配置环境变量，在Path环境变量里面添加%RubyInstaller_install_path%\bin(其中%RubyInstaller_install_path%表示你安装的RubyInstaller路径)。打开命令行工具，输入以下命令升级gem：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">gem update --system</div></pre></td></tr></table></figure>
+<p>(2) 在下载RubyInstaller的页面上下载对应版本的DevKit，解压到指定目录，打开命令行工具进入DevKit的安装目录，输入以下命令来安装Ruby：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ruby dk.rb init</div><div class="line">ruby dk.rb install</div></pre></td></tr></table></figure>
+<blockquote>
+<p>DevKit是windows平台下编译和使用本地C/C++扩展包的工具。它就是用来模拟Linux平台下的make,gcc,sh来进行编译。</p>
+</blockquote>
+<p>(3) 接下来就可以安装Jekyll了，执行以下gem命令来安装Jekyll：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">gem install jekyll</div></pre></td></tr></table></figure>
+<p>使用以下命令来检测安装是否成功</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jekyll --version</div></pre></td></tr></table></figure>
+<p>(4) 安装解析Markdown标记的包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">gem install rdiscount</div></pre></td></tr></table></figure>
+<p>(5) 创建GitHub个人站点项目</p>
+<p>GitHub做了一个约定，创建名为[username].github.io的项目来存放你的个人站点目录及内容，并且约定必须使用master分支。其中username表示你的GitHub用户名。</p>
+<p>基于这个约定，我们首先在GitHub上面创建这个项目，并将这个项目clone到本地某个目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git <span class="built_in">clone</span> https://github.com/[username]/[username].github.io.git</div></pre></td></tr></table></figure>
+<p>(6) 基于Jekyll Bootstrap主题模板来初始化我们的个人博客</p>
+<p>这里我们采用Jekyll Bootstrap主题模板来初始化构建我们的博客，然后我们可以在其上继续完善并定制自己的博客页面内容。</p>
+<p>从Jekyll Bootstrap GitHub地址将Jeyll Bootstrap拉取到本地：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git <span class="built_in">clone</span> https://github.com/plusjade/jekyll-bootstrap.git</div></pre></td></tr></table></figure>
+<p>然后将jekyll-boostrap目录里面的所有内容(除了.git文件夹)以外，拷贝到步骤(5)的username.github.io目录里面。</p>
+<p>(7) 修改_config.yml</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">title : [你的博客名称]</div><div class="line">author :</div><div class="line">  name : [你的名字]</div><div class="line">  email : [你的邮箱]</div><div class="line">  github : [你的GitHub用户名]</div><div class="line">  twitter : NONE</div><div class="line">  feedburner : NONE</div><div class="line"></div><div class="line">#其中username为你的GitHub用户名</div><div class="line">production_url : http://username.github.io</div></pre></td></tr></table></figure>
+<p>(8) 打开命令行工具，进入username.github.io目录，执行以下命令运行jekyll本地测试博客：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jekyll serve</div></pre></td></tr></table></figure>
+<p>成功运行后，打开浏览器访问：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">localhost:4000</div></pre></td></tr></table></figure>
+<p>随即我们可以看到一个Bootstrap样式的博客在本地就已经跑起来了。至此我们初始化本地开发环境的工作已经结束。接下来将简单介绍如何发布文章。</p>
+<h3 id="2-2-发布第一篇文章"><a href="#2-2-发布第一篇文章" class="headerlink" title="2.2 发布第一篇文章"></a>2.2 发布第一篇文章</h3><p>在_post目录下面新建一个md文件，命名为2016-03-07-hello-jekyll.md，然后写下如下内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">---</div><div class="line">layout: post</div><div class="line">category : jekyll</div><div class="line">tags : [ jekyll, blog ]</div><div class="line">title : 使用GitHub Pages搭建技术博客</div><div class="line">published : <span class="literal">true</span></div><div class="line">---</div><div class="line"></div><div class="line">&#123;% raw %&#125;&#123; % include /JB/setup % &#125;&#123;% endraw %&#125;</div><div class="line"></div><div class="line"><span class="comment">## 第一篇文章</span></div><div class="line"></div><div class="line">Hello Jekyll!</div></pre></td></tr></table></figure>
+<p>被<code>---</code>包围的部分是Jekyll规定用来配置变量的。<code>layout</code>表示当前布局所在父布局；<code>category</code>用来指定文章属于哪个分类，还可以用<code>tags</code>来为文章打上标签，标签可以有多个；<code>title</code>表示文章的标题。<code>published</code>为true表示将会被Jekyll引擎渲染成html并发布到站点，为false表示不渲染，默认为true。</p>
+<blockquote>
+<p>实践中发现文章的文件命名[title]部分不能使用中文，因为文章[title]会作为站点url的一部分被使用，但是可以通过上面所说的变量title来指定文章的中文标题，以将每一篇文章的标题在页面上显示为中文。</p>
+</blockquote>
+<h3 id="2-3-上推到GitHub"><a href="#2-3-上推到GitHub" class="headerlink" title="2.3 上推到GitHub"></a>2.3 上推到GitHub</h3><p>最后我们使用git命令，提交我们所有修改，然后将项目上推到GitHub上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">git add .</div><div class="line">git commit -m <span class="string">"init my github site"</span></div><div class="line">git push origin master</div></pre></td></tr></table></figure>
+<p>成功后打开浏览器访问username.github.io即可以访问我们搭建的GitHub博客了。至此我们已经知道如何通过GitHub Pages来搭建以及发布自己的技术文章了。当然，这篇文章没有深入涉及Jekyll，你可以在Jekyll官网上面获取到更多它的介绍以及使用。还有，这里我们只是使用了Jekyll Bootstrap主题模板来装饰我们的博客，假如你对前端技术比较熟悉，完全可以自己再去定制自己的博客主题样式和布局，使你的博客看上去更美观。</p>
+<h3 id="可选-2-4-绑定域名"><a href="#可选-2-4-绑定域名" class="headerlink" title="(可选) 2.4 绑定域名"></a>(可选) 2.4 绑定域名</h3><p>GitHub Pages允许你将搭建的个人站点绑定到你的域名。这里以万网为例讲解如何将一个[username].github.io的个人博客绑定到你在万网上面购买的域名上(对的，没错，要用钱购买的域名)。</p>
+<blockquote>
+<p>现在万网已经归到阿里云管理里面，可以使用阿里云账号去购买一个属于你自己的域名。</p>
+</blockquote>
+<p>(1) 在你的项目根目录下新建名为<strong>CNAME</strong>的文件(注意不要有任何文件后缀)，然后打开CNAME文件，输入你购买的域名(不用输入www或者<a href="http://)，然后将项目提交到GitHub上面。" target="_blank" rel="external">http://)，然后将项目提交到GitHub上面。</a></p>
+<p>(2) 登陆阿里云，进入【域名管理】-&gt;【域名设置】，添加一个“解析”，记录类型为<code>CNAME</code>，主机记录为<code>@</code>，记录值为<code>[username].github.io</code>，确定后保存并等待10分钟。然后访问你的域名，将会看到你的GitHub Pages个人站点成功访问到了。</p>
+<h2 id="3-参考"><a href="#3-参考" class="headerlink" title="3. 参考"></a>3. 参考</h2><ul>
+<li><a href="http://jekyll.bootcss.com/" target="_blank" rel="external">Jekyll中文官网</a></li>
+<li><a href="http://www.cnblogs.com/purediy/archive/2013/03/07/2948892.html" target="_blank" rel="external">通过GitHub Pages建立个人站点</a></li>
+<li><a href="http://ju.outofmemory.cn/entry/98471" target="_blank" rel="external">Jekyll语法简单笔记</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/blog/" rel="tag"># blog</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/01/async-webservice-using-cxf/" rel="next" title="CXF异步WebService发布和调用">
+                <i class="fa fa-chevron-left"></i> CXF异步WebService发布和调用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/07/jdk7-hashmap-introduction/" rel="prev" title="JDK7 HashMap源码分析">
+                JDK7 HashMap源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-搭建技术博客"><span class="nav-number">1.</span> <span class="nav-text">1. 搭建技术博客</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-Jekyll简介"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 Jekyll简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-Jekyll目录结构"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 Jekyll目录结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-搭建流程"><span class="nav-number">2.</span> <span class="nav-text">2. 搭建流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-本地开发环境搭建"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 本地开发环境搭建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-发布第一篇文章"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 发布第一篇文章</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-上推到GitHub"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 上推到GitHub</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可选-2-4-绑定域名"><span class="nav-number">2.4.</span> <span class="nav-text">(可选) 2.4 绑定域名</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-参考"><span class="nav-number">3.</span> <span class="nav-text">3. 参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,739 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase,Phoenix," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1. 是否存在高效的csv导出工具?phoenix提供了BulkLoad工具，使得用户可以将大数据量的csv格式数据高效地通过phoenix导入hbase，那么phoenix是否也存在高效导出csv数据的工具类呢？
+这里可能有人会想是否能够按照导出常规hbase的方法来导出数据。比如自己写Java代码，或者用hbase原生支持的工具类，或者说采用pig提供的hbase工具类。是否能这么干取决于你p">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Phoenix 导出CSV文件">
+<meta property="og:url" content="http://yoursite.com/2016/05/08/phoenix-export-csv/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="1. 是否存在高效的csv导出工具?phoenix提供了BulkLoad工具，使得用户可以将大数据量的csv格式数据高效地通过phoenix导入hbase，那么phoenix是否也存在高效导出csv数据的工具类呢？
+这里可能有人会想是否能够按照导出常规hbase的方法来导出数据。比如自己写Java代码，或者用hbase原生支持的工具类，或者说采用pig提供的hbase工具类。是否能这么干取决于你p">
+<meta property="og:updated_time" content="2017-08-05T06:39:39.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Phoenix 导出CSV文件">
+<meta name="twitter:description" content="1. 是否存在高效的csv导出工具?phoenix提供了BulkLoad工具，使得用户可以将大数据量的csv格式数据高效地通过phoenix导入hbase，那么phoenix是否也存在高效导出csv数据的工具类呢？
+这里可能有人会想是否能够按照导出常规hbase的方法来导出数据。比如自己写Java代码，或者用hbase原生支持的工具类，或者说采用pig提供的hbase工具类。是否能这么干取决于你p">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/05/08/phoenix-export-csv/"/>
+
+
+
+
+
+  <title> Phoenix 导出CSV文件 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix-export-csv/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Phoenix 导出CSV文件
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-08T00:00:00+08:00">
+                2016-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/HBase-Phoenix/" itemprop="url" rel="index">
+                    <span itemprop="name">HBase.Phoenix</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-是否存在高效的csv导出工具"><a href="#1-是否存在高效的csv导出工具" class="headerlink" title="1. 是否存在高效的csv导出工具?"></a>1. 是否存在高效的csv导出工具?</h2><p>phoenix提供了BulkLoad工具，使得用户可以将大数据量的csv格式数据高效地通过phoenix导入hbase，那么phoenix是否也存在高效导出csv数据的工具类呢？</p>
+<p>这里可能有人会想是否能够按照导出常规hbase的方法来导出数据。比如自己写Java代码，或者用hbase原生支持的工具类，或者说采用pig提供的hbase工具类。<strong>是否能这么干取决于你phoenix建表时候字段的数据类型。</strong>如果字段采用的不是varchar、char等字符类型以及unsigned_*类型，或者你的表是salted table，那么脱离phoenix的导出方式必然会导致导出的数据不正确。原因在于phoenix处理大部分数据类型数据字节格式化的方式与原生hbase不一样。比如，phoenix salted table会在rowkey的第一个字节插入hash值来使数据均匀分布到每一个region上，所以用常规hbase导出工具导出势必造成rowkey的导出不正确。</p>
+<a id="more"></a>
+<h2 id="2-Pig-Loader——最优且唯一的Phoenix导出csv文件工具"><a href="#2-Pig-Loader——最优且唯一的Phoenix导出csv文件工具" class="headerlink" title="2. Pig Loader——最优且唯一的Phoenix导出csv文件工具"></a>2. Pig Loader——最优且唯一的Phoenix导出csv文件工具</h2><p>幸运的是phoenix官方确实提供了一个高效的导出工具类，但是必须依赖于pig。而且在试验过程，也就发现<strong>只有这个唯一的工具可以完美地支持phoenix表数据的导出</strong>。</p>
+<blockquote>
+<p>关于pig的介绍以及使用不是这篇文章的重点，没有接触过的朋友请自行百度或者google检索。</p>
+</blockquote>
+<p>phoenix集成pig的介绍可以在查看这个链接：<a href="https://phoenix.apache.org/pig_integration.html" target="_blank" rel="external">phoenix-pig</a></p>
+<p>里面提到了两个工具方法，一个用于海量数据的导入，类似于BulkLoad工具，另外一个工具方法用于海量数据的导出。这里我们关注数据的导出。</p>
+<p>导出工具号称为 <strong>Pig Loader</strong>。根据官网上的介绍：</p>
+<blockquote>
+<p>A Pig data loader allows users to read data from Phoenix backed HBase tables within a Pig script.</p>
+</blockquote>
+<p>意思是我们可以编写pig脚本并使用phoenix-pig（phoenix继承pig的模块）提供的工具类来运行pig脚本实现海量数据的导出。</p>
+<p>Pig Loader有两种形式实现导出：</p>
+<h2 id="2-1-export-using-table"><a href="#2-1-export-using-table" class="headerlink" title="2.1 export using table"></a>2.1 export using table</h2><p>第一种是通过指定hbase表名来导出整个表数据，例如我想导出TEST表的所有记录，那么可以用如下的脚本命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">A = load &apos;hbase://table/USER&apos; using org.apache.phoenix.pig.PhoenixHBaseLoader(&apos;$&#123;zookeeper.quorum&#125;&apos;);</div></pre></td></tr></table></figure>
+<blockquote>
+<p>需要将${zookeeper.quorum}替换成zookeeper集群机器ip加端口，eg: master,slave1,slave2:2181</p>
+</blockquote>
+<p>当然我们还可以精确控制只导出表的哪几个列：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">A = load &apos;hbase://table/USER/ID,NAME&apos; using org.apache.phoenix.pig.PhoenixHBaseLoader(&apos;$&#123;zookeeper.quorum&#125;&apos;);</div></pre></td></tr></table></figure>
+<p>上面的脚本表示导出TEST表所有记录，但仅包含ID列和NAME列。</p>
+<h3 id="2-2-export-using-query"><a href="#2-2-export-using-query" class="headerlink" title="2.2 export using query"></a>2.2 export using query</h3><p>另外一种是通过指定query语句来控制导出的数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">A = load &apos;hbase://query/SELECT ID,NAME FROM USER WHERE AGE &gt; 50&apos; using org.apache.phoenix.pig.PhoenixHBaseLoader(&apos;$&#123;zookeeper.quorum&#125;&apos;);</div></pre></td></tr></table></figure>
+<p><strong>【注意】</strong></p>
+<p>使用query语句指定的导出方式存在很大的限制，比如说不能指定GROUP BY , LIMIT , ORDER BY , DISTINCT ；同时也无法指定使用聚合函数，如count，sum等。</p>
+<h2 id="3-使用示例"><a href="#3-使用示例" class="headerlink" title="3. 使用示例"></a>3. 使用示例</h2><p>下面我们通过两个完整的使用示例介绍两种导出方式的使用。Example1演示指定table方式的导出，而Example2演示指定query方式的导出。</p>
+<h3 id="3-1-Example1"><a href="#3-1-Example1" class="headerlink" title="3.1 Example1"></a>3.1 Example1</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">vi example1.pig</div><div class="line"></div><div class="line">REGISTER /data/phoenix-default/phoenix-4.6.0-HBase-1.0-client.jar;</div><div class="line">rows = load <span class="string">'hbase://table/USER'</span> USING org.apache.phoenix.pig.PhoenixHBaseLoader(<span class="string">'master,slave1,slave2:2181'</span>);</div><div class="line">STORE rows INTO <span class="string">'USER.csv'</span> USING PigStorage(<span class="string">','</span>);</div></pre></td></tr></table></figure>
+<p>执行shell命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pig -x mapreduce example1.pig</div></pre></td></tr></table></figure>
+<h3 id="3-2-Example2"><a href="#3-2-Example2" class="headerlink" title="3.2 Example2"></a>3.2 Example2</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">vi example2.pig</div><div class="line"></div><div class="line">REGISTER /data/phoenix-default/phoenix-4.6.0-HBase-1.0-client.jar;</div><div class="line">rows = load <span class="string">'hbase://query/SELECT ID,NAME FROM USER'</span> USING org.apache.phoenix.pig.PhoenixHBaseLoader(<span class="string">'master,slave1,slave2:2181'</span>);</div><div class="line">STORE rows INTO <span class="string">'USER.csv'</span> USING PigStorage(<span class="string">','</span>);</div></pre></td></tr></table></figure>
+<p>执行shell命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pig -x mapreduce example2.pig</div></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag"># HBase</a>
+          
+            <a href="/tags/Phoenix/" rel="tag"># Phoenix</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/08/phoenix4.6-bulkload-oom/" rel="next" title="Phoenix4.6 BulkLoad OOM">
+                <i class="fa fa-chevron-left"></i> Phoenix4.6 BulkLoad OOM
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/06/18/sf-interview/" rel="prev" title="顺丰科技数据库中间件研发工程师面试经历">
+                顺丰科技数据库中间件研发工程师面试经历 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-是否存在高效的csv导出工具"><span class="nav-number">1.</span> <span class="nav-text">1. 是否存在高效的csv导出工具?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Pig-Loader——最优且唯一的Phoenix导出csv文件工具"><span class="nav-number">2.</span> <span class="nav-text">2. Pig Loader——最优且唯一的Phoenix导出csv文件工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-export-using-table"><span class="nav-number">3.</span> <span class="nav-text">2.1 export using table</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-export-using-query"><span class="nav-number">3.1.</span> <span class="nav-text">2.2 export using query</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-使用示例"><span class="nav-number">4.</span> <span class="nav-text">3. 使用示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Example1"><span class="nav-number">4.1.</span> <span class="nav-text">3.1 Example1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Example2"><span class="nav-number">4.2.</span> <span class="nav-text">3.2 Example2</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

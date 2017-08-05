@@ -1,0 +1,747 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Java," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="ConcurrentHashMap是JDK5以后引入的，用于弥补HashMap不可用于多线程环境以及HashTable在多线程并发竞争效率低的缺陷。ConcurrentHashMap不仅是线程安全的HashMap，而且通过引入分段锁概念来提高多线程并发访问的效率。如果你的程序处于多线程环境，而且要用到HashMap的结构来存储数据，那么ConcurrentHashMap将是你的首选。这篇文章主要介">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK7 ConcurrentHashMap源码分析">
+<meta property="og:url" content="http://yoursite.com/2016/03/12/jdk7-concurrenthashmap-introduction/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="ConcurrentHashMap是JDK5以后引入的，用于弥补HashMap不可用于多线程环境以及HashTable在多线程并发竞争效率低的缺陷。ConcurrentHashMap不仅是线程安全的HashMap，而且通过引入分段锁概念来提高多线程并发访问的效率。如果你的程序处于多线程环境，而且要用到HashMap的结构来存储数据，那么ConcurrentHashMap将是你的首选。这篇文章主要介">
+<meta property="og:image" content="http://yoursite.com/!--￼8-->/assets/image/jdk7-concurrenthashmap-introduction/concurrenthashmap.png">
+<meta property="og:updated_time" content="2017-08-05T06:38:55.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK7 ConcurrentHashMap源码分析">
+<meta name="twitter:description" content="ConcurrentHashMap是JDK5以后引入的，用于弥补HashMap不可用于多线程环境以及HashTable在多线程并发竞争效率低的缺陷。ConcurrentHashMap不仅是线程安全的HashMap，而且通过引入分段锁概念来提高多线程并发访问的效率。如果你的程序处于多线程环境，而且要用到HashMap的结构来存储数据，那么ConcurrentHashMap将是你的首选。这篇文章主要介">
+<meta name="twitter:image" content="http://yoursite.com/!--￼8-->/assets/image/jdk7-concurrenthashmap-introduction/concurrenthashmap.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/03/12/jdk7-concurrenthashmap-introduction/"/>
+
+
+
+
+
+  <title> JDK7 ConcurrentHashMap源码分析 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/12/jdk7-concurrenthashmap-introduction/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                JDK7 ConcurrentHashMap源码分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-12T00:00:00+08:00">
+                2016-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java-JDK源码/" itemprop="url" rel="index">
+                    <span itemprop="name">Java.JDK源码</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>ConcurrentHashMap是JDK5以后引入的，用于弥补HashMap不可用于多线程环境以及HashTable在多线程并发竞争效率低的缺陷。ConcurrentHashMap不仅是线程安全的HashMap，而且通过引入分段锁概念来提高多线程并发访问的效率。如果你的程序处于多线程环境，而且要用到HashMap的结构来存储数据，那么ConcurrentHashMap将是你的首选。这篇文章主要介绍ConcurrentHashMap的底层实现原理以及一些常用的操作。</p>
+<a id="more"></a>
+<h2 id="1-ConcurrentHashMap底层结构"><a href="#1-ConcurrentHashMap底层结构" class="headerlink" title="1. ConcurrentHashMap底层结构"></a>1. ConcurrentHashMap底层结构</h2><blockquote>
+<p>Segment + HashEntry</p>
+</blockquote>
+<p>一个ConcurrentHashMap由一个Segment数组组成(Segment数组长度默认为16)，<strong>一个Segment底层是一个HashEntry数组</strong>，而HashEntry对象包括<code>key</code>、<code>value</code>、<code>hash</code>值和指向下一个HashEntry的引用<code>next</code>，<strong>Segment中的每一个HashEntry都是一个链表，这样看来一个Segment就对应了一个HashMap结构，那么ConcurrentHashMap内部其实可以看成由多个HashMap，即多个Segment的结构组成</strong>。ConcurrentHashMap的结构图如下所示：</p>
+<p><img src="!--￼8--&gt;/assets/image/jdk7-concurrenthashmap-introduction/concurrenthashmap.png" alt="concurrent hashmap structure"></p>
+<h2 id="2-分段锁介绍"><a href="#2-分段锁介绍" class="headerlink" title="2. 分段锁介绍"></a>2. 分段锁介绍</h2><p><strong>一个Segment代表了一个可重入锁(ReentrantLock)</strong>，ConcurrentHashMap正是通过将元素散列到不同的Segment，来提高多线程并发访问的效率。我们知道HashTable也是线程安全的类，但是在多线程并发竞争激烈的时候，效率很低，因为HashTable就用了一把锁(自己本身)，也就是说同一个时刻，最多有一个线程能够获取该锁对内部元素进行操作，其他线程都必须阻塞直到占有锁的线程释放了对HashTable的使用权。而一个ConcurrentHashMap内部持有多个锁(体现为多个Segment)，如果多个线程操作的都是不同的Segment，那么这些线程持有的是不同的锁，允许并发写。因此,采用了分段锁的ConcurrentHashMap在多线程并发访问下效率有了很大的提升。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Segment</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">extends</span> <span class="title">ReentrantLock</span> <span class="keyword">implements</span> <span class="title">Serializable</span> </span>&#123;</div><div class="line"></div><div class="line"><span class="comment">// ...</span></div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="3-ConcurrentHashMap的初始化"><a href="#3-ConcurrentHashMap的初始化" class="headerlink" title="3. ConcurrentHashMap的初始化"></a>3. ConcurrentHashMap的初始化</h2><p>初始化过程会涉及到以下参数的使用：</p>
+<ul>
+<li>initialCapacity</li>
+<li>loadFactor</li>
+<li>concurrencyLevel</li>
+<li>ssize</li>
+<li>segmentShift</li>
+<li>segmentMask</li>
+</ul>
+<p>其中ssize表示Segment数组的长度，是由concurrencyLevel的值来决定的。ssize的值总是接近于concurrencyLevel值，并且必须是2的N次方。假如concurrencyLevel等于14、15或者16，ssize都会等于16(2的4次方)。</p>
+<p>initialCapacity和loadFactor影响每个Segment里面HashEntry数组的长度，代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (initialCapacity &gt; MAXIMUM_CAPACITY)</div><div class="line">	initialCapacity = MAXIMUM_CAPACITY;</div><div class="line"><span class="keyword">int</span> c = initialCapacity / ssize;</div><div class="line"><span class="keyword">if</span> (c * ssize &lt; initialCapacity)</div><div class="line">	++c;</div><div class="line"><span class="keyword">int</span> cap = MIN_SEGMENT_TABLE_CAPACITY;</div><div class="line"><span class="keyword">while</span> (cap &lt; c)</div><div class="line">	cap &lt;&lt;= <span class="number">1</span>;</div></pre></td></tr></table></figure>
+<p>默认的initialCapacity和ssize均为16，<code>cap = MIN_SEGMENT_TABLE_CAPACITY = 2</code>。<strong>从源码中说明了HashEntry数组的长度是2的N次方</strong>。</p>
+<p>segmentShift、segmentMask两个参数用于根据key散列值来计算元素位于哪个Segment，计算方式如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(hash &gt;&gt;&gt; segmentShift) &amp; segmentMask</div></pre></td></tr></table></figure>
+<p>注意初始化过程只初始化了下标为0的Segment，其他的Segment是延迟初始化的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// create segments and segments[0]</span></div><div class="line">Segment&lt;K,V&gt; s0 =</div><div class="line">	<span class="keyword">new</span> Segment&lt;K,V&gt;(loadFactor, (<span class="keyword">int</span>)(cap * loadFactor),</div><div class="line">					 (HashEntry&lt;K,V&gt;[])<span class="keyword">new</span> HashEntry[cap]);</div><div class="line">Segment&lt;K,V&gt;[] ss = (Segment&lt;K,V&gt;[])<span class="keyword">new</span> Segment[ssize];</div><div class="line">UNSAFE.putOrderedObject(ss, SBASE, s0); <span class="comment">// ordered write of segments[0]</span></div><div class="line"><span class="keyword">this</span>.segments = ss;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>ConcurrentHashMap元素的查找需要进行2次定位，第一次是根据hash值定位到某一个Segment上，第二次是根据hash值定位到Segment对应的HashEntry链上。</p>
+</blockquote>
+<h2 id="4-ConcurrentHashMap操作"><a href="#4-ConcurrentHashMap操作" class="headerlink" title="4. ConcurrentHashMap操作"></a>4. ConcurrentHashMap操作</h2><h3 id="4-1-get操作"><a href="#4-1-get操作" class="headerlink" title="4.1 get操作"></a>4.1 get操作</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> V <span class="title">get</span><span class="params">(Object key)</span> </span>&#123;</div><div class="line">	Segment&lt;K,V&gt; s; <span class="comment">// manually integrate access methods to reduce overhead</span></div><div class="line">	HashEntry&lt;K,V&gt;[] tab;</div><div class="line">	<span class="keyword">int</span> h = hash(key);</div><div class="line">	<span class="keyword">long</span> u = (((h &gt;&gt;&gt; segmentShift) &amp; segmentMask) &lt;&lt; SSHIFT) + SBASE;</div><div class="line">	<span class="keyword">if</span> ((s = (Segment&lt;K,V&gt;)UNSAFE.getObjectVolatile(segments, u)) != <span class="keyword">null</span> &amp;&amp;</div><div class="line">		(tab = s.table) != <span class="keyword">null</span>) &#123;</div><div class="line">		<span class="keyword">for</span> (HashEntry&lt;K,V&gt; e = (HashEntry&lt;K,V&gt;) UNSAFE.getObjectVolatile</div><div class="line">				 (tab, ((<span class="keyword">long</span>)(((tab.length - <span class="number">1</span>) &amp; h)) &lt;&lt; TSHIFT) + TBASE);</div><div class="line">			 e != <span class="keyword">null</span>; e = e.next) &#123;</div><div class="line">			K k;</div><div class="line">			<span class="keyword">if</span> ((k = e.key) == key || (e.hash == h &amp;&amp; key.equals(k)))</div><div class="line">				<span class="keyword">return</span> e.value;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>get操作首先通过计算key的hash值，然后根据hash值找到对应的Segment所在下标位置，最后从Segment里面查找。从Segment的查找操作又涉及到HashEntry链的定位。即执行一次get操作需要两次定位。第一次定位到Segment，第二次定位到Segment对应的HashEntry链上。两次定位后遍历链表，查找相关元素，找到的情况下返回元素value，找不到就返回null。</p>
+<p>从源码中我们看出get操作是不需要加锁的，那么它又是如何保持取到的值是最新的呢？分析如下：</p>
+<p>每一个Segment里面HashEntry数组为volatile类型并且HashEntry对象的value属性和next引用均为volatile类型。定义为volatile的变量能够在不同线程之间保持可见性，可以被多个线程同时读，并且不会读到过期的值。</p>
+<blockquote>
+<p>这是因为根据Java内存模型的happen-before原则，对volatile字段的写入操作先于读操作，即使两个线程同时修改和获取volatile变量，get操作也能拿到最新的值。这是用volatile替换锁的经典应用场景。 —— 参考《Java并发编程艺术》一书</p>
+</blockquote>
+<h3 id="4-2-put操作"><a href="#4-2-put操作" class="headerlink" title="4.2 put操作"></a>4.2 put操作</h3><p>put操作，同一个时刻只能有一个线程能够访问某个Segment，但是如果其他线程访问的是其他不同的Segment，那么这些线程可以并发写，原因为这些线程持有的是不同的锁。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> V <span class="title">put</span><span class="params">(K key, V value)</span> </span>&#123;</div><div class="line">	Segment&lt;K,V&gt; s;</div><div class="line">	<span class="keyword">if</span> (value == <span class="keyword">null</span>)</div><div class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</div><div class="line">	<span class="keyword">int</span> hash = hash(key);</div><div class="line">	<span class="keyword">int</span> j = (hash &gt;&gt;&gt; segmentShift) &amp; segmentMask;</div><div class="line">	<span class="keyword">if</span> ((s = (Segment&lt;K,V&gt;)UNSAFE.getObject          <span class="comment">// nonvolatile; recheck</span></div><div class="line">		 (segments, (j &lt;&lt; SSHIFT) + SBASE)) == <span class="keyword">null</span>) <span class="comment">//  in ensureSegment</span></div><div class="line">		s = ensureSegment(j);</div><div class="line">	<span class="keyword">return</span> s.put(key, hash, value, <span class="keyword">false</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>put操作首先计算hash值，并定位到对应的Segment，然后在Segment上面执行put操作，Segment的put操作比较复杂，先贴下源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">final</span> V <span class="title">put</span><span class="params">(K key, <span class="keyword">int</span> hash, V value, <span class="keyword">boolean</span> onlyIfAbsent)</span> </span>&#123;</div><div class="line">	HashEntry&lt;K,V&gt; node = tryLock() ? <span class="keyword">null</span> :</div><div class="line">		scanAndLockForPut(key, hash, value);</div><div class="line">	V oldValue;</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">		HashEntry&lt;K,V&gt;[] tab = table;</div><div class="line">		<span class="keyword">int</span> index = (tab.length - <span class="number">1</span>) &amp; hash; <span class="comment">// 二次定位，定位到HashEntry链</span></div><div class="line">		HashEntry&lt;K,V&gt; first = entryAt(tab, index);</div><div class="line">		<span class="keyword">for</span> (HashEntry&lt;K,V&gt; e = first;;) &#123;  <span class="comment">// hash冲突，遍历查找是否有key值相同的元素</span></div><div class="line">			<span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</div><div class="line">				K k;</div><div class="line">				<span class="keyword">if</span> ((k = e.key) == key ||</div><div class="line">					(e.hash == hash &amp;&amp; key.equals(k))) &#123;</div><div class="line">					oldValue = e.value;</div><div class="line">					<span class="keyword">if</span> (!onlyIfAbsent) &#123;</div><div class="line">						e.value = value;</div><div class="line">						++modCount;</div><div class="line">					&#125;</div><div class="line">					<span class="keyword">break</span>;</div><div class="line">				&#125;</div><div class="line">				e = e.next;</div><div class="line">			&#125;</div><div class="line">			<span class="keyword">else</span> &#123; <span class="comment">// hash不冲突的情况</span></div><div class="line">				<span class="keyword">if</span> (node != <span class="keyword">null</span>)</div><div class="line">					node.setNext(first);</div><div class="line">				<span class="keyword">else</span></div><div class="line">					node = <span class="keyword">new</span> HashEntry&lt;K,V&gt;(hash, key, value, first);</div><div class="line">				<span class="keyword">int</span> c = count + <span class="number">1</span>;</div><div class="line">				<span class="keyword">if</span> (c &gt; threshold &amp;&amp; tab.length &lt; MAXIMUM_CAPACITY)</div><div class="line">					rehash(node);</div><div class="line">				<span class="keyword">else</span></div><div class="line">					setEntryAt(tab, index, node);</div><div class="line">				++modCount;</div><div class="line">				count = c;</div><div class="line">				oldValue = <span class="keyword">null</span>;</div><div class="line">				<span class="keyword">break</span>;</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125; <span class="keyword">finally</span> &#123;</div><div class="line">		unlock();</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> oldValue;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Segment的put操作分析如下：</p>
+<p>首先会调用<code>tryLock()</code>方法尝试获取锁，如果获取到则node变量为null，如果获取不到锁，那么将调用<code>scanAndLockForPut(...)</code>方法，该操作持续查找对应的节点链上是否存在key对应的节点，如果没有找到就预先创建一个节点，持续尝试n次，直到超过尝试限制，才真正调用<code>lock()</code>方法等待获取锁。对于最大尝试次数<code>MAX_SCAN_RETRIES</code>，单核尝试1次，多核尝试64次。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> HashEntry&lt;K,V&gt; <span class="title">scanAndLockForPut</span><span class="params">(K key, <span class="keyword">int</span> hash, V value)</span> </span>&#123;</div><div class="line">	HashEntry&lt;K,V&gt; first = entryForHash(<span class="keyword">this</span>, hash);</div><div class="line">	HashEntry&lt;K,V&gt; e = first;</div><div class="line">	HashEntry&lt;K,V&gt; node = <span class="keyword">null</span>;</div><div class="line">	<span class="keyword">int</span> retries = -<span class="number">1</span>; <span class="comment">// negative while locating node</span></div><div class="line">	<span class="comment">//尝试加锁</span></div><div class="line">	<span class="keyword">while</span> (!tryLock()) &#123;</div><div class="line">		HashEntry&lt;K,V&gt; f; <span class="comment">// to recheck first below</span></div><div class="line">		<span class="keyword">if</span> (retries &lt; <span class="number">0</span>) &#123;</div><div class="line">			<span class="keyword">if</span> (e == <span class="keyword">null</span>) &#123;</div><div class="line">				<span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="comment">// speculatively create node</span></div><div class="line">					node = <span class="keyword">new</span> HashEntry&lt;K,V&gt;(hash, key, value, <span class="keyword">null</span>);</div><div class="line">				retries = <span class="number">0</span>;</div><div class="line">			&#125;</div><div class="line">			<span class="keyword">else</span> <span class="keyword">if</span> (key.equals(e.key))</div><div class="line">				retries = <span class="number">0</span>;</div><div class="line">			<span class="keyword">else</span></div><div class="line">				e = e.next;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (++retries &gt; MAX_SCAN_RETRIES) &#123;</div><div class="line">			lock();</div><div class="line">			<span class="keyword">break</span>;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">else</span> <span class="keyword">if</span> ((retries &amp; <span class="number">1</span>) == <span class="number">0</span> &amp;&amp;</div><div class="line">				 (f = entryForHash(<span class="keyword">this</span>, hash)) != first) &#123;</div><div class="line">			e = first = f; <span class="comment">// re-traverse if entry changed</span></div><div class="line">			retries = -<span class="number">1</span>;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> node;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接下来就是在HashEntry链上进行遍历，如果发现有key相同的元素存在(表示出现hash冲突)，那么根据具体情况处理冲突，不出现冲突则新建节点并进行链表节点插入操作。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/07/jdk7-hashmap-introduction/" rel="next" title="JDK7 HashMap源码分析">
+                <i class="fa fa-chevron-left"></i> JDK7 HashMap源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/15/jdk7-arrayblockingqueue-introduction/" rel="prev" title="JDK7 ArrayBlockingQueue源码分析">
+                JDK7 ArrayBlockingQueue源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-ConcurrentHashMap底层结构"><span class="nav-number">1.</span> <span class="nav-text">1. ConcurrentHashMap底层结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-分段锁介绍"><span class="nav-number">2.</span> <span class="nav-text">2. 分段锁介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-ConcurrentHashMap的初始化"><span class="nav-number">3.</span> <span class="nav-text">3. ConcurrentHashMap的初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-ConcurrentHashMap操作"><span class="nav-number">4.</span> <span class="nav-text">4. ConcurrentHashMap操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-get操作"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 get操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-put操作"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 put操作</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

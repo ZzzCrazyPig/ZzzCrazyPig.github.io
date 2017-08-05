@@ -1,0 +1,783 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="kettle," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1.前言最近在开发一个Kettle步骤插件的时候遇到CCE(ClassCastException)异常，在网上Google了很多资料，自己又调试了很久，才摸索出一些解决方法，分享给大家，相信对于经常开发Kettle插件的开发者难免会碰到这种奇葩的问题。
+在开发调试过程中通过使用-DKETTLE_PLUGIN_CLASSES参数指定加载插件进行调试的时候并未报任何异常。然而，当我把插件打包部署到pl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kettle Plugin ClassCastException 解决思路">
+<meta property="og:url" content="http://yoursite.com/2016/04/01/kettle-diff-classloader-cause-CCE/index.html">
+<meta property="og:site_name" content="crazypig's blog">
+<meta property="og:description" content="1.前言最近在开发一个Kettle步骤插件的时候遇到CCE(ClassCastException)异常，在网上Google了很多资料，自己又调试了很久，才摸索出一些解决方法，分享给大家，相信对于经常开发Kettle插件的开发者难免会碰到这种奇葩的问题。
+在开发调试过程中通过使用-DKETTLE_PLUGIN_CLASSES参数指定加载插件进行调试的时候并未报任何异常。然而，当我把插件打包部署到pl">
+<meta property="og:updated_time" content="2017-08-05T06:41:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kettle Plugin ClassCastException 解决思路">
+<meta name="twitter:description" content="1.前言最近在开发一个Kettle步骤插件的时候遇到CCE(ClassCastException)异常，在网上Google了很多资料，自己又调试了很久，才摸索出一些解决方法，分享给大家，相信对于经常开发Kettle插件的开发者难免会碰到这种奇葩的问题。
+在开发调试过程中通过使用-DKETTLE_PLUGIN_CLASSES参数指定加载插件进行调试的时候并未报任何异常。然而，当我把插件打包部署到pl">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/04/01/kettle-diff-classloader-cause-CCE/"/>
+
+
+
+
+
+  <title> Kettle Plugin ClassCastException 解决思路 | crazypig's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">crazypig's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/01/kettle-diff-classloader-cause-CCE/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="crazypig">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="crazypig's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="crazypig's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Kettle Plugin ClassCastException 解决思路
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-01T00:00:00+08:00">
+                2016-04-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ETL-kettle/" itemprop="url" rel="index">
+                    <span itemprop="name">ETL.kettle</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1.前言"></a>1.前言</h2><p>最近在开发一个Kettle步骤插件的时候遇到<strong>CCE(ClassCastException)</strong>异常，在网上Google了很多资料，自己又调试了很久，才摸索出一些解决方法，分享给大家，相信对于经常开发Kettle插件的开发者难免会碰到这种奇葩的问题。</p>
+<p>在开发调试过程中通过使用<code>-DKETTLE_PLUGIN_CLASSES</code>参数指定加载插件进行调试的时候并未报任何异常。然而，当我把插件打包部署到plugins目录下进行调试的时候，奇怪的异常就出现了：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Caused by: java.lang.ClassCastException: class org.apache.cxf.bus.spring.SpringBusFactory</div><div class="line">    at java.lang.Class.asSubclass(Class.java:3208)</div><div class="line">    at org.apache.cxf.BusFactory.newInstance(BusFactory.java:327)</div><div class="line">    ... 31 more</div></pre></td></tr></table></figure>
+<p>当时就懵了，后来查阅了一些资料，调试了相关代码，发现通过指定<code>-DKETTLE_PLUGIN_CLASSES</code>参数调试插件的时候，插件使用的ClassLoader是<code>AppClassLoader</code>,而当插件部署到plugins目录使用的ClassLoader是Kettle自定义的ClassLoader -&gt; <code>KettleURLClassLoader</code>。</p>
+<blockquote>
+<p>KettleURLClassLoader加载class的机制违反了传统的双亲委托机制，默认先从本地加载，加载不到的情况下才委托父级ClassLoader加载。原因是Kettle为了实现不同插件之间依赖库的隔离。</p>
+</blockquote>
+<a id="more"></a>
+<h2 id="2-ClassCastException分析"><a href="#2-ClassCastException分析" class="headerlink" title="2.ClassCastException分析"></a>2.ClassCastException分析</h2><p><strong>出现这个问题是因为不同的ClassLoader加载了相同的接口和实现类(包全名一致)，然后进行强制转换</strong>。在JDK实现的ClassLoader机制(双亲委托)里，这种问题基本上不会存在，但是一旦应用中通过自定义ClassLoader来加载类并打破这种机制，就容易出现ClassCastException。很不幸，为了实现不同插件之间依赖库的隔离，Kettle自定义了KettleURLClassLoader并打破了双亲委托机制。<strong>所以当你开发的插件依赖比较复杂，特别是用到了一些框架，如Spring、CXF等，这种情况就容易发生</strong>。</p>
+<blockquote>
+<p>打破JDK原有ClassLoader机制的自定义ClassLoader通常都是先从当前定义的ClassLoader加载，加载不到类的情况下再委托父classLoader里加载。</p>
+</blockquote>
+<h2 id="3-验证过程"><a href="#3-验证过程" class="headerlink" title="3.验证过程"></a>3.验证过程</h2><p>在我开发的插件中需要用到CXF来调用webservice，由如下调用会出现上面提到的异常：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Bus bus = BusFactory.getDefaultBus();</div></pre></td></tr></table></figure>
+<p>根据前面给出的异常堆栈调试CXF<code>BusFactory</code>源码:</p>
+<p>通过调试分析出异常路径为：</p>
+<p>BusFactory.newInstance(String className) -&gt; getBusFactoryClass(ClassLoader classLoader) </p>
+<p>接下来注意getBusFactoryClass方法里面以下代码片段：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// .....</span></div><div class="line"></div><div class="line"><span class="keyword">if</span> (isValidBusFactoryClass(busFactoryClass) </div><div class="line">	&amp;&amp; busFactoryCondition != <span class="keyword">null</span>) &#123;</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">		Class&lt;?&gt; cls =  ClassLoaderUtils.loadClass(busFactoryClass, BusFactory.class)</div><div class="line">			.asSubclass(BusFactory.class);</div><div class="line">	   </div><div class="line"><span class="comment">// ....</span></div><div class="line">	&#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>debug断点进入Class.asSubClass()方法，我们就可以知道为何会抛出CCE异常了：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> &lt;U&gt; Class&lt;? extends U&gt; asSubclass(Class&lt;U&gt; clazz) &#123;</div><div class="line">	<span class="keyword">if</span> (clazz.isAssignableFrom(<span class="keyword">this</span>))</div><div class="line">		<span class="keyword">return</span> (Class&lt;? extends U&gt;) <span class="keyword">this</span>;</div><div class="line">	<span class="keyword">else</span></div><div class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> ClassCastException(<span class="keyword">this</span>.toString());</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>asSubClass()方法的处理逻辑是：判断clazz是否为当前类的子类（注意必须是由同一个ClassLoder加载），如果是执行强制转换，否则抛出CCE异常。</p>
+</blockquote>
+<p>当我的程序debug到该方法下，通过Eclipse Debug视图下的Expresssions增加并观察变量：</p>
+<ul>
+<li>this</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">class org.apache.cxf.bus.spring.SpringBusFactory</div></pre></td></tr></table></figure>
+<ul>
+<li>this .getClassLoader()</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sun.misc.Launcher$AppClassLoader@2c8fc809</div></pre></td></tr></table></figure>
+<ul>
+<li>clazz</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">class org.apache.cxf.BusFactory</div></pre></td></tr></table></figure>
+<ul>
+<li>BusFactory .class .getClassLoader()</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">org.pentaho.di.core.plugins.KettleURLClassLoader@31d7e3a9 : XXXX</div></pre></td></tr></table></figure>
+<ul>
+<li>clazz .isAssignableFrom(this)</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">false</div></pre></td></tr></table></figure>
+<p>到此已经可以很清楚的分析出，<strong>产生CCE的原因是因为子类和父类是由不同的ClassLoader加载，尝试强制转换失败后抛出该异常</strong>。</p>
+<h2 id="4-巧妙的解决方法"><a href="#4-巧妙的解决方法" class="headerlink" title="4.巧妙的解决方法"></a>4.巧妙的解决方法</h2><p>庆幸的是，许多的框架，如Spring、CXF加载Class使用的ClassLoader都是从当前线程的context class loader中获取：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Thread.currentThread().getContextClassLoader()</div></pre></td></tr></table></figure>
+<p>因此我们可以通过巧妙的方式绕过CCE，<strong>通过临时设置当前线程的context loader为当前插件所使用的classloader(表示为KettleURLClassLoader类的对象)，然后在执行结束以后还原当前线程的context class loader</strong>。示例如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">Classloader originalClassloader = Thread.currentThread().getContextClassLoader();</div><div class="line"></div><div class="line">Thread.currentThread().setContextClassLoader(MyPluginClass.class.getClassLoader());</div><div class="line"></div><div class="line">....<span class="comment">//Execute library code</span></div><div class="line"></div><div class="line">Thread.currentThread().setContextClassLoader(originalClassloader);</div></pre></td></tr></table></figure>
+<p>Thread ConextClassLoader相当于JDK给我们提供了一个后门，可以让我们违背ClassLoader原来的设计模型：双亲委托模型，通过自定义的ClassLoader来加载类。</p>
+<blockquote>
+<p>这种方式不知道是不是最合理的解决方案，因为我们必须无奈地在任何会出现CCE的调用前后植入临时设置context class loader的代码。</p>
+</blockquote>
+<h2 id="5-奇怪的LinkageError出现了"><a href="#5-奇怪的LinkageError出现了" class="headerlink" title="5.奇怪的LinkageError出现了"></a>5.奇怪的LinkageError出现了</h2><p>解决了CCE问题，也许问题不会到此结束，可能你还会遇到<code>LinkageError</code>：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">java.lang.LinkageError: loader constraint violation: loader (instance of org/pentaho/di/core/plugins/KettleURLClassLoader) previously initiated loading <span class="keyword">for</span> a different type with name <span class="string">"org/w3c/dom/Node"</span></div></pre></td></tr></table></figure>
+<p><strong>出现这种情况是由于一个ClassLoader加载了一个类，而后另外一个ClassLoader又加载了这个相同的类</strong>。在前面CCE基础上出现这个问题我猜测是因为插件的ClassLoader先加载了自身依赖库中的一个类，而最后应用程序使用非插件ClassLoader(一般是AppClassLoader)加载同一个类，导致抛出这种异常。<strong>我们可以猜测很有可能是因为jar包冲突，即插件的lib下某些jar可能与Kettle根目录下的lib下里的某些jar包冲突导致</strong>。解决的办法是排除插件里面与kettle自带的那些冲突jar。</p>
+<blockquote>
+<p>我们可以自己写一个小程序遍历两个目录下的jar包，分析比较出交集，交集即代表了冲突的jar。</p>
+</blockquote>
+<p>在我开发的插件中存在以下jar包与Kettle lib包下面的jar包冲突：</p>
+<ul>
+<li>commons-codec</li>
+<li>asm</li>
+<li>stax-api</li>
+<li>commons-logging</li>
+<li>xmlbeans</li>
+<li>wsdl4j</li>
+<li>xercesImpl</li>
+<li>xml-apis</li>
+</ul>
+<p>我的解决方法就是在开发的插件中删掉这些jar包，使用Kettle lib下自带的jar就可以了。其实也就是让Kettle的ClassLoader(AppClassLoader)统一加载这个类，而不是插件的ClassLoader(KettleURLClassLoader)。</p>
+<p>通过以上解决方法，事情也终于告一段落了。</p>
+<h2 id="6-参考"><a href="#6-参考" class="headerlink" title="6.参考"></a>6.参考</h2><ul>
+<li><a href="http://ifeve.com/classloader/" target="_blank" rel="external">深入浅出ClassLoader</a></li>
+<li><a href="http://forums.pentaho.com/showthread.php?81995-How-does-the-classloader-for-plugins-differentiate-from-the-standardjava-classloader" target="_blank" rel="external">How does the classloader for plugins differentiate from the standardjava classloader</a></li>
+<li><a href="http://stackoverflow.com/questions/27694920/classcastexception-in-kettle-step" target="_blank" rel="external">classcastexception in kettle step</a></li>
+<li><a href="http://forums.pentaho.com/archive/index.php/t-78045.html" target="_blank" rel="external">loader constraint violation - KettleURLClassLoader Job Plugin</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/kettle/" rel="tag"># kettle</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/15/jdk7-arrayblockingqueue-introduction/" rel="next" title="JDK7 ArrayBlockingQueue源码分析">
+                <i class="fa fa-chevron-left"></i> JDK7 ArrayBlockingQueue源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/01/kettle5-log4j-plugin-usage/" rel="prev" title="Kettle5 log4j插件使用">
+                Kettle5 log4j插件使用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="crazypig" />
+          <p class="site-author-name" itemprop="name">crazypig</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-前言"><span class="nav-number">1.</span> <span class="nav-text">1.前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-ClassCastException分析"><span class="nav-number">2.</span> <span class="nav-text">2.ClassCastException分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-验证过程"><span class="nav-number">3.</span> <span class="nav-text">3.验证过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-巧妙的解决方法"><span class="nav-number">4.</span> <span class="nav-text">4.巧妙的解决方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-奇怪的LinkageError出现了"><span class="nav-number">5.</span> <span class="nav-text">5.奇怪的LinkageError出现了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-参考"><span class="nav-number">6.</span> <span class="nav-text">6.参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">crazypig</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
