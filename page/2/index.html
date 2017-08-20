@@ -1165,7 +1165,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix4.6-bulkload-oom/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix-secondary-index/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="crazypig">
@@ -1184,7 +1184,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2016/05/08/phoenix4.6-bulkload-oom/" itemprop="url">Phoenix4.6 BulkLoad OOM</a></h1>
+                <a class="post-title-link" href="/2016/05/08/phoenix-secondary-index/" itemprop="url">Phoenix 二级索引</a></h1>
         
 
         <div class="post-meta">
@@ -1257,10 +1257,11 @@
 
       
         
-          <p>Phoenix官方提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。但是在使用过程中发现导入几百万数据会在reduce阶段抛OOM异常从而导致MapReduce任务失败。这篇文章将介绍如何解决BulkLoad产生OOM的问题。</p>
+          <p>我们知道HBase唯一的索引就是rowkey，相当于关系型数据库里面的主键。对于使用rowkey进行定位的查询，HBase能够做到毫秒级别返回。但是，HBase没有辅助索引的概念，也就是说如果我们的查询条件涉及到列族里面的某些列，那么HBase查询效率将会大大降低，复杂的查询甚至会给HBase集群带来灾难性的性能问题。幸运的是，Phoenix提供了二级索引表来构建HBase辅助索引，用于提供除了rowkey以外的列条件高效查询。这篇文章主要介绍Phoenix二级索引的概念和使用方式。</p>
+<h2 id="1-为什么需要用二级索引"><a href="#1-为什么需要用二级索引" class="headerlink" title="1. 为什么需要用二级索引?"></a>1. 为什么需要用二级索引?</h2><p>对于HBase而言，如果想精确地定位到某行记录，唯一的办法是通过rowkey来查询。如果不通过rowkey来查找数据，就必须逐行地比较每一列的值，即全表扫瞄。对于较大的表，全表扫描的代价是不可接受的。但是，很多情况下，需要从多个角度查询数据。例如，在定位某个人的时候，可以通过姓名、身份证号、学籍号等不同的角度来查询，要想把这么多角度的数据都放到rowkey中几乎不可能（业务的灵活性不允许，对rowkey长度的要求也不允许）。所以，需要secondary index（二级索引）来完成这件事。secondary index的原理很简单，但是如果自己维护的话则会麻烦一些。现在，Phoenix已经提供了对HBase secondary index的支持。 </p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2016/05/08/phoenix4.6-bulkload-oom/#more" rel="contents">
+            <a class="btn" href="/2016/05/08/phoenix-secondary-index/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1604,7 +1605,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix-secondary-index/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/08/phoenix4.6-bulkload-oom/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="crazypig">
@@ -1623,7 +1624,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2016/05/08/phoenix-secondary-index/" itemprop="url">Phoenix 二级索引</a></h1>
+                <a class="post-title-link" href="/2016/05/08/phoenix4.6-bulkload-oom/" itemprop="url">Phoenix4.6 BulkLoad OOM</a></h1>
         
 
         <div class="post-meta">
@@ -1696,11 +1697,10 @@
 
       
         
-          <p>我们知道HBase唯一的索引就是rowkey，相当于关系型数据库里面的主键。对于使用rowkey进行定位的查询，HBase能够做到毫秒级别返回。但是，HBase没有辅助索引的概念，也就是说如果我们的查询条件涉及到列族里面的某些列，那么HBase查询效率将会大大降低，复杂的查询甚至会给HBase集群带来灾难性的性能问题。幸运的是，Phoenix提供了二级索引表来构建HBase辅助索引，用于提供除了rowkey以外的列条件高效查询。这篇文章主要介绍Phoenix二级索引的概念和使用方式。</p>
-<h2 id="1-为什么需要用二级索引"><a href="#1-为什么需要用二级索引" class="headerlink" title="1. 为什么需要用二级索引?"></a>1. 为什么需要用二级索引?</h2><p>对于HBase而言，如果想精确地定位到某行记录，唯一的办法是通过rowkey来查询。如果不通过rowkey来查找数据，就必须逐行地比较每一列的值，即全表扫瞄。对于较大的表，全表扫描的代价是不可接受的。但是，很多情况下，需要从多个角度查询数据。例如，在定位某个人的时候，可以通过姓名、身份证号、学籍号等不同的角度来查询，要想把这么多角度的数据都放到rowkey中几乎不可能（业务的灵活性不允许，对rowkey长度的要求也不允许）。所以，需要secondary index（二级索引）来完成这件事。secondary index的原理很简单，但是如果自己维护的话则会麻烦一些。现在，Phoenix已经提供了对HBase secondary index的支持。 </p>
+          <p>Phoenix官方提供了一个导入海量数据的MapReduce工具 CsvBulkLoadTool，根据官方的说明，使用这个工具可以高效地往hbase导入csv文本数据，内部会使用phoenix api去处理数据，包括数据类型、salt rowkey处理、索引表同步等等。相比较使用psql来导入，效率会提高很多。但是在使用过程中发现导入几百万数据会在reduce阶段抛OOM异常从而导致MapReduce任务失败。这篇文章将介绍如何解决BulkLoad产生OOM的问题。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2016/05/08/phoenix-secondary-index/#more" rel="contents">
+            <a class="btn" href="/2016/05/08/phoenix4.6-bulkload-oom/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
