@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/10/06/mycat-sqlparse-model-introduction/</loc>
+    <lastmod>2017-08-05T07:14:53.000Z</lastmod>
+    <data>
+        <display>
+        <title>Mycat sql解析模块分析</title>
+        <pubTime>2016-10-05T16:00:00.000Z</pubTime>
+        
+        <tag>Mycat</tag>
+         
+         
+           
+             
+              <breadCrumb title="Mycat.源码" url="http://blog.crazypig.me/categories/Mycat-%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2017/06/06/mysql-gr-sync-or-async/</loc>
+    <lastmod>2017-08-05T07:12:00.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication 同步 or 异步?</title>
+        <pubTime>2017-06-05T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2017/04/22/mysql-gr-node-state-introduction/</loc>
+    <lastmod>2017-08-05T07:10:07.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication 节点状态详解</title>
+        <pubTime>2017-04-21T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2017/03/13/mysql-gr-error1236/</loc>
+    <lastmod>2017-08-05T07:08:28.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication Got fatal error 1236</title>
+        <pubTime>2017-03-12T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2017/01/05/mysql-gr-dynamic-add-member/</loc>
+    <lastmod>2017-08-05T07:06:35.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication动态添加成员</title>
+        <pubTime>2017-01-04T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/12/21/mysql-gr-deploy-in-single-primary-mode/</loc>
+    <lastmod>2017-08-05T07:05:03.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication搭建[Single-Primary Mode]</title>
+        <pubTime>2016-12-20T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/12/21/mysql-gr-deploy-in-multi-primary-mode/</loc>
+    <lastmod>2017-08-05T07:03:49.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication 搭建[Multi-Primary Mode]</title>
+        <pubTime>2016-12-20T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/12/20/mysql-gr-tech/</loc>
+    <lastmod>2017-08-05T07:02:05.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication技术点</title>
+        <pubTime>2016-12-19T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/12/16/mysql-gr-introduction/</loc>
+    <lastmod>2017-08-05T06:59:51.000Z</lastmod>
+    <data>
+        <display>
+        <title>MySQL Group Replication介绍</title>
+        <pubTime>2016-12-15T16:00:00.000Z</pubTime>
+        
+        <tag>MySQL</tag>
+         
+         
+           
+             
+              <breadCrumb title="MySQL.GR" url="http://blog.crazypig.me/categories/MySQL-GR/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/08/26/mycat-thread-model-introduction/</loc>
+    <lastmod>2017-08-05T06:53:14.000Z</lastmod>
+    <data>
+        <display>
+        <title>Mycat线程模型分析</title>
+        <pubTime>2016-08-25T16:00:00.000Z</pubTime>
+        
+        <tag>Mycat</tag>
+         
+         
+           
+             
+              <breadCrumb title="Mycat.源码" url="http://blog.crazypig.me/categories/Mycat-%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/08/26/mycat-tx-manage-introduction/</loc>
+    <lastmod>2017-08-05T06:53:02.000Z</lastmod>
+    <data>
+        <display>
+        <title>Mycat事务管理分析</title>
+        <pubTime>2016-08-25T16:00:00.000Z</pubTime>
+        
+        <tag>Mycat</tag>
+         
+         
+           
+             
+              <breadCrumb title="Mycat.源码" url="http://blog.crazypig.me/categories/Mycat-%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/07/25/mycat-debug-env-build/</loc>
+    <lastmod>2017-08-05T06:49:00.000Z</lastmod>
+    <data>
+        <display>
+        <title>Mycat源码调试环境搭建</title>
+        <pubTime>2016-07-24T16:00:00.000Z</pubTime>
+        
+        <tag>Mycat</tag>
+         
+         
+           
+             
+              <breadCrumb title="Mycat.源码" url="http://blog.crazypig.me/categories/Mycat-%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/09/21/mycat-server-prepare-introduction/</loc>
+    <lastmod>2017-08-05T06:42:35.000Z</lastmod>
+    <data>
+        <display>
+        <title>Mycat预处理功能分析</title>
+        <pubTime>2016-09-20T16:00:00.000Z</pubTime>
+        
+        <tag>Mycat</tag>
+         
+         
+           
+             
+              <breadCrumb title="Mycat.源码" url="http://blog.crazypig.me/categories/Mycat-%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/03/06/build-site-using-github-pages/</loc>
+    <lastmod>2017-08-05T06:42:16.000Z</lastmod>
+    <data>
+        <display>
+        <title>使用GitHub Pages搭建技术博客</title>
+        <pubTime>2016-03-05T16:00:00.000Z</pubTime>
+        
+        <tag>blog</tag>
+         
+         
+           
+             
+              <breadCrumb title="blog" url="http://blog.crazypig.me/categories/blog/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/01/05/carte-deploy-for-windows-service/</loc>
+    <lastmod>2017-08-05T06:42:10.000Z</lastmod>
+    <data>
+        <display>
+        <title>将Carte部署为Windows服务</title>
+        <pubTime>2016-01-04T16:00:00.000Z</pubTime>
+        
+        <tag>kettle</tag>
+         
+         
+           
+             
+              <breadCrumb title="ETL.kettle" url="http://blog.crazypig.me/categories/ETL-kettle/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/01/05/kettle5.x-step-plugin-dev-summary/</loc>
+    <lastmod>2017-08-05T06:41:56.000Z</lastmod>
+    <data>
+        <display>
+        <title>Kettle5.x步骤组件开发总结</title>
+        <pubTime>2016-01-04T16:00:00.000Z</pubTime>
+        
+        <tag>kettle</tag>
+         
+         
+           
+             
+              <breadCrumb title="ETL.kettle" url="http://blog.crazypig.me/categories/ETL-kettle/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/01/20/carte-introduction/</loc>
+    <lastmod>2017-08-05T06:41:50.000Z</lastmod>
+    <data>
+        <display>
+        <title>Kettle Carte简介</title>
+        <pubTime>2016-01-19T16:00:00.000Z</pubTime>
+        
+        <tag>kettle</tag>
+         
+         
+           
+             
+              <breadCrumb title="ETL.kettle" url="http://blog.crazypig.me/categories/ETL-kettle/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/04/01/kettle5-log4j-plugin-usage/</loc>
+    <lastmod>2017-08-05T06:41:42.000Z</lastmod>
+    <data>
+        <display>
+        <title>Kettle5 log4j插件使用</title>
+        <pubTime>2016-03-31T16:00:00.000Z</pubTime>
+        
+        <tag>kettle</tag>
+         
+         
+           
+             
+              <breadCrumb title="ETL.kettle" url="http://blog.crazypig.me/categories/ETL-kettle/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/04/01/kettle-diff-classloader-cause-CCE/</loc>
+    <lastmod>2017-08-05T06:41:36.000Z</lastmod>
+    <data>
+        <display>
+        <title>Kettle Plugin ClassCastException 解决思路</title>
+        <pubTime>2016-03-31T16:00:00.000Z</pubTime>
+        
+        <tag>kettle</tag>
+         
+         
+           
+             
+              <breadCrumb title="ETL.kettle" url="http://blog.crazypig.me/categories/ETL-kettle/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/03/01/async-webservice-using-cxf/</loc>
+    <lastmod>2017-08-05T06:41:12.000Z</lastmod>
+    <data>
+        <display>
+        <title>CXF异步WebService发布和调用</title>
+        <pubTime>2016-02-29T16:00:00.000Z</pubTime>
+        
+        <tag>Java</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java.WebService" url="http://blog.crazypig.me/categories/Java-WebService/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/05/08/phoenix-salted-table/</loc>
+    <lastmod>2017-08-05T06:40:46.000Z</lastmod>
+    <data>
+        <display>
+        <title>Phoenix Salted Table</title>
+        <pubTime>2016-05-07T16:00:00.000Z</pubTime>
+        
+        <tag>HBase</tag>
+         
+        <tag>Phoenix</tag>
+         
+         
+           
+             
+              <breadCrumb title="HBase.Phoenix" url="http://blog.crazypig.me/categories/HBase-Phoenix/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/05/08/phoenix-secondary-index/</loc>
+    <lastmod>2017-08-05T06:40:40.000Z</lastmod>
+    <data>
+        <display>
+        <title>Phoenix 二级索引</title>
+        <pubTime>2016-05-07T16:00:00.000Z</pubTime>
+        
+        <tag>HBase</tag>
+         
+        <tag>Phoenix</tag>
+         
+         
+           
+             
+              <breadCrumb title="HBase.Phoenix" url="http://blog.crazypig.me/categories/HBase-Phoenix/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/05/08/phoenix4.6-adapt-cdh5.4/</loc>
+    <lastmod>2017-08-05T06:40:37.000Z</lastmod>
+    <data>
+        <display>
+        <title>Phoenix4.6 适配 CDH5.4</title>
+        <pubTime>2016-05-07T16:00:00.000Z</pubTime>
+        
+        <tag>HBase</tag>
+         
+        <tag>Phoenix</tag>
+         
+         
+           
+             
+              <breadCrumb title="HBase.Phoenix" url="http://blog.crazypig.me/categories/HBase-Phoenix/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/05/08/phoenix4.6-bulkload-oom/</loc>
+    <lastmod>2017-08-05T06:40:28.000Z</lastmod>
+    <data>
+        <display>
+        <title>Phoenix4.6 BulkLoad OOM</title>
+        <pubTime>2016-05-07T16:00:00.000Z</pubTime>
+        
+        <tag>HBase</tag>
+         
+        <tag>Phoenix</tag>
+         
+         
+           
+             
+              <breadCrumb title="HBase.Phoenix" url="http://blog.crazypig.me/categories/HBase-Phoenix/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/05/08/phoenix-export-csv/</loc>
+    <lastmod>2017-08-05T06:39:39.000Z</lastmod>
+    <data>
+        <display>
+        <title>Phoenix 导出CSV文件</title>
+        <pubTime>2016-05-07T16:00:00.000Z</pubTime>
+        
+        <tag>HBase</tag>
+         
+        <tag>Phoenix</tag>
+         
+         
+           
+             
+              <breadCrumb title="HBase.Phoenix" url="http://blog.crazypig.me/categories/HBase-Phoenix/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/04/18/java-gc-introduction/</loc>
+    <lastmod>2017-08-05T06:39:22.000Z</lastmod>
+    <data>
+        <display>
+        <title>Java GC 介绍</title>
+        <pubTime>2016-04-17T16:00:00.000Z</pubTime>
+        
+        <tag>Java</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java.GC" url="http://blog.crazypig.me/categories/Java-GC/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/03/15/jdk7-arrayblockingqueue-introduction/</loc>
+    <lastmod>2017-08-05T06:39:05.000Z</lastmod>
+    <data>
+        <display>
+        <title>JDK7 ArrayBlockingQueue源码分析</title>
+        <pubTime>2016-03-14T16:00:00.000Z</pubTime>
+        
+        <tag>Java</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java.JDK源码" url="http://blog.crazypig.me/categories/Java-JDK%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/03/12/jdk7-concurrenthashmap-introduction/</loc>
+    <lastmod>2017-08-05T06:38:55.000Z</lastmod>
+    <data>
+        <display>
+        <title>JDK7 ConcurrentHashMap源码分析</title>
+        <pubTime>2016-03-11T16:00:00.000Z</pubTime>
+        
+        <tag>Java</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java.JDK源码" url="http://blog.crazypig.me/categories/Java-JDK%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/03/07/jdk7-hashmap-introduction/</loc>
+    <lastmod>2017-08-05T06:38:45.000Z</lastmod>
+    <data>
+        <display>
+        <title>JDK7 HashMap源码分析</title>
+        <pubTime>2016-03-06T16:00:00.000Z</pubTime>
+        
+        <tag>Java</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java.JDK源码" url="http://blog.crazypig.me/categories/Java-JDK%E6%BA%90%E7%A0%81/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+    
+  <url>
+    <loc>http://blog.crazypig.me/2016/06/18/sf-interview/</loc>
+    <lastmod>2017-08-05T06:13:04.000Z</lastmod>
+    <data>
+        <display>
+        <title>顺丰科技数据库中间件研发工程师面试经历</title>
+        <pubTime>2016-06-17T16:00:00.000Z</pubTime>
+        
+        <tag>interview</tag>
+         
+         
+           
+             
+              <breadCrumb title="interview" url="http://blog.crazypig.me/categories/interview/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://blog.crazypig.me/2017/08/05/hello-world/</loc>
+    <lastmod>2017-08-05T05:47:56.000Z</lastmod>
+    <data>
+        <display>
+        <title>hello-world</title>
+        <pubTime>2017-08-05T05:47:56.000Z</pubTime>
+        
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+</urlset>
